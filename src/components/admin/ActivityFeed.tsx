@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useNexusStore } from '@/lib/store';
+import { fetchActivityLogs } from '@/lib/api';
 
 const ACTION_COLORS: Record<string, string> = {
   collecting: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/40 dark:text-cyan-300',
@@ -102,11 +103,8 @@ export default function ActivityFeed() {
 
   const fetchActivity = async () => {
     try {
-      const res = await fetch('/api/activity');
-      if (res.ok) {
-        const data = await res.json();
-        setActivityLogs(Array.isArray(data) ? data : data.logs || []);
-      }
+      const data = await fetchActivityLogs();
+      setActivityLogs(Array.isArray(data) ? data : []);
     } catch {
       // Silently fail
     }

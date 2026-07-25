@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNexusStore } from '@/lib/store';
 import { toast } from '@/hooks/use-toast';
+import { fetchApprovedArticles, publishArticle } from '@/lib/api';
 import type { Article } from '@/lib/store';
 
 const PLATFORMS = [
@@ -94,27 +95,15 @@ function PublishingCard({ article }: { article: Article }) {
     setLoadingPublish(article.id);
     try {
       const platforms = pendingPlatforms.map((p) => p.key);
-      const res = await fetch('/api/publish', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ articleId: article.id, platforms }),
+      await publishArticle(article.id, platforms);
+      toast({
+        title: 'Pubblicazione avviata',
+        description: `Pubblicazione su ${platforms.length} piattaforme in corso...`,
       });
-      if (res.ok) {
-        toast({
-          title: 'Pubblicazione avviata',
-          description: `Pubblicazione su ${platforms.length} piattaforme in corso...`,
-        });
-      } else {
-        toast({
-          title: 'Errore',
-          description: 'Impossibile avviare la pubblicazione.',
-          variant: 'destructive',
-        });
-      }
     } catch {
       toast({
         title: 'Errore',
-        description: 'Errore di connessione.',
+        description: 'Impossibile avviare la pubblicazione.',
         variant: 'destructive',
       });
     } finally {
@@ -239,29 +228,15 @@ export default function PublishingPanel() {
   const [approvedArticles, setApprovedArticles] = useState<Article[]>([]);
 
   useEffect(() => {
-    async function fetchArticles() {
+    async function loadArticles() {
       try {
-        const res = await fetch('/api/articles?status=approved&limit=20');
-        if (res.ok) {
-          const data = await res.json();
-          setApprovedArticles(Array.isArray(data) ? data : []);
-        }
-        // Also fetch published articles that have publish logs
-        const res2 = await fetch('/api/articles?status=published&limit=10');
-        if (res2.ok) {
-          const data2 = await res2.json();
-          const published = Array.isArray(data2) ? data2 : [];
-          setApprovedArticles((prev) => {
-            const ids = new Set(prev.map((a) => a.id));
-            const newOnes = published.filter((a: Article) => !ids.has(a.id));
-            return [...prev, ...newOnes];
-          });
-        }
+        const data = await fetchApprovedArticles();
+        setApprovedArticles(Array.isArray(data) ? data : []);
       } catch {
         // Silently fail
       }
     }
-    fetchArticles();
+    loadArticles();
   }, [setArticles]);
 
   const allArticles = [...approvedArticles];

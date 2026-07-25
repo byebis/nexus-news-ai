@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useNexusStore } from '@/lib/store';
 import { toast } from '@/hooks/use-toast';
+import { approveArticle } from '@/lib/api';
 import type { Article } from '@/lib/store';
 
 const CATEGORY_BADGE_COLORS: Record<string, string> = {
@@ -36,31 +37,19 @@ function ApprovalCard({ article }: { article: Article }) {
   const handleAction = async (action: 'approve' | 'reject') => {
     setLoadingApprove(article.id);
     try {
-      const res = await fetch('/api/approve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ articleId: article.id, action }),
+      await approveArticle(article.id, action);
+      toast({
+        title: action === 'approve' ? 'Articolo approvato' : 'Articolo rifiutato',
+        description: `"${article.title}" è stato ${action === 'approve' ? 'approvato' : 'rifiutato'}.`,
       });
-      if (res.ok) {
-        toast({
-          title: action === 'approve' ? 'Articolo approvato' : 'Articolo rifiutato',
-          description: `"${article.title}" è stato ${action === 'approve' ? 'approvato' : 'rifiutato'}.`,
-        });
-        // Remove from pending list
-        setPendingArticles(
-          useNexusStore.getState().pendingArticles.filter((a) => a.id !== article.id)
-        );
-      } else {
-        toast({
-          title: 'Errore',
-          description: 'Impossibile completare l\'azione.',
-          variant: 'destructive',
-        });
-      }
+      // Remove from pending list
+      setPendingArticles(
+        useNexusStore.getState().pendingArticles.filter((a) => a.id !== article.id)
+      );
     } catch {
       toast({
         title: 'Errore',
-        description: 'Errore di connessione.',
+        description: 'Impossibile completare l\'azione.',
         variant: 'destructive',
       });
     } finally {

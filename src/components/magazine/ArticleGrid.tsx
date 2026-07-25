@@ -3,28 +3,26 @@
 import { useEffect } from 'react';
 import { Newspaper } from 'lucide-react';
 import { useNexusStore } from '@/lib/store';
+import { fetchArticles } from '@/lib/api';
 import ArticleCard from './ArticleCard';
 
 export default function ArticleGrid() {
   const { articles, selectedCategory, setArticles } = useNexusStore();
 
   useEffect(() => {
-    async function fetchArticles() {
+    async function loadArticles() {
       try {
-        const params = new URLSearchParams({ status: 'published', limit: '20' });
-        if (selectedCategory && selectedCategory !== 'all') {
-          params.set('category', selectedCategory);
-        }
-        const res = await fetch(`/api/articles?${params.toString()}`);
-        if (res.ok) {
-          const data = await res.json();
-          setArticles(data);
-        }
+        const data = await fetchArticles({
+          status: 'published',
+          limit: 20,
+          category: selectedCategory && selectedCategory !== 'all' ? selectedCategory : undefined,
+        });
+        setArticles(data);
       } catch {
         // Silently fail
       }
     }
-    fetchArticles();
+    loadArticles();
   }, [selectedCategory, setArticles]);
 
   const filteredArticles = articles.filter(

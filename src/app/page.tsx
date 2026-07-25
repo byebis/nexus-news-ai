@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useNexusStore } from '@/lib/store';
+import { fetchSettings } from '@/lib/api';
 import Header from '@/components/shared/Header';
 import Footer from '@/components/shared/Footer';
 import HeroSection from '@/components/magazine/HeroSection';
@@ -15,18 +16,17 @@ export default function Home() {
 
   // Fetch settings on mount
   useEffect(() => {
-    async function fetchSettings() {
+    async function loadSettings() {
       try {
-        const res = await fetch('/api/settings');
-        if (res.ok) {
-          const data = await res.json();
+        const data = await fetchSettings();
+        if (data) {
           setSettings(data);
         }
       } catch {
         // Silently fail
       }
     }
-    fetchSettings();
+    loadSettings();
   }, [setSettings]);
 
   return (

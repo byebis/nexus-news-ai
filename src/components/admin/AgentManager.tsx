@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNexusStore } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
+import { collectNews, updateAgent } from '@/lib/api';
 import type { Agent } from '@/lib/store';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; dotColor: string }> = {
@@ -40,18 +41,10 @@ function AgentCard({ agent, index }: AgentCardProps) {
   const handleCollect = async () => {
     setLoadingCollect(agent.id);
     try {
-      const res = await fetch('/api/collect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agentId: agent.id }),
-      });
-      if (res.ok) {
-        toast({ title: 'Raccolta avviata', description: `${agent.name} sta raccogliendo notizie...`, variant: 'default' });
-      } else {
-        toast({ title: 'Errore', description: 'Impossibile avviare la raccolta', variant: 'destructive' });
-      }
+      await collectNews(agent.id);
+      toast({ title: 'Raccolta avviata', description: `${agent.name} sta raccogliendo notizie...`, variant: 'default' });
     } catch {
-      toast({ title: 'Errore', description: 'Errore di connessione', variant: 'destructive' });
+      toast({ title: 'Errore', description: 'Impossibile avviare la raccolta', variant: 'destructive' });
     } finally {
       setLoadingCollect(null);
     }
@@ -60,19 +53,11 @@ function AgentCard({ agent, index }: AgentCardProps) {
   const handleToggleStatus = async () => {
     const newStatus = agent.status === 'active' ? 'paused' : 'active';
     try {
-      const res = await fetch('/api/agents', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: agent.id, status: newStatus }),
-      });
-      if (res.ok) {
-        const updated = await res.json();
-        // Update agent in the store
-        setAgents(useNexusStore.getState().agents.map((a) =>
-          a.id === agent.id ? { ...a, status: newStatus, ...updated } : a
-        ));
-        toast({ title: 'Stato aggiornato', description: `${agent.name} è ora ${newStatus === 'active' ? 'attivo' : 'in pausa'}`, variant: 'default' });
-      }
+      await updateAgent(agent.id, { status: newStatus });
+      setAgents(useNexusStore.getState().agents.map((a) =>
+        a.id === agent.id ? { ...a, status: newStatus } : a
+      ));
+      toast({ title: 'Stato aggiornato', description: `${agent.name} è ora ${newStatus === 'active' ? 'attivo' : 'in pausa'}`, variant: 'default' });
     } catch {
       toast({ title: 'Errore', description: 'Impossibile aggiornare lo stato', variant: 'destructive' });
     }

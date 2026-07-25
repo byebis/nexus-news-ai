@@ -3,6 +3,7 @@
 import { useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useNexusStore } from '@/lib/store';
+import { fetchArticles } from '@/lib/api';
 
 interface CategoryItem {
   name: string;
@@ -29,15 +30,12 @@ export default function CategoryBar() {
       setSelectedCategory(catName);
 
       try {
-        const params = new URLSearchParams({ status: 'published', limit: '20' });
-        if (catName !== 'all') {
-          params.set('category', catName);
-        }
-        const res = await fetch(`/api/articles?${params.toString()}`);
-        if (res.ok) {
-          const data = await res.json();
-          setArticles(data);
-        }
+        const data = await fetchArticles({
+          status: 'published',
+          limit: 20,
+          category: catName !== 'all' ? catName : undefined,
+        });
+        setArticles(data);
       } catch {
         // Silently fail - articles will remain unchanged
       }

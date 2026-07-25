@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useNexusStore, type AdminTab } from '@/lib/store';
+import { fetchAgents, fetchPendingArticles, fetchActivityLogs, fetchSettings } from '@/lib/api';
 import AgentManager from './AgentManager';
 import ApprovalQueue from './ApprovalQueue';
 import PublishingPanel from './PublishingPanel';
@@ -39,27 +40,23 @@ export default function AdminPanel() {
     async function fetchAllData() {
       try {
         const [agentsRes, pendingRes, activityRes, settingsRes] = await Promise.allSettled([
-          fetch('/api/agents'),
-          fetch('/api/articles?status=pending_approval'),
-          fetch('/api/activity'),
-          fetch('/api/settings'),
+          fetchAgents(),
+          fetchPendingArticles(),
+          fetchActivityLogs(),
+          fetchSettings(),
         ]);
 
-        if (agentsRes.status === 'fulfilled' && agentsRes.value.ok) {
-          const data = await agentsRes.value.json();
-          setAgents(Array.isArray(data) ? data : data.agents || []);
+        if (agentsRes.status === 'fulfilled' && agentsRes.value) {
+          setAgents(Array.isArray(agentsRes.value) ? agentsRes.value : []);
         }
-        if (pendingRes.status === 'fulfilled' && pendingRes.value.ok) {
-          const data = await pendingRes.value.json();
-          setPendingArticles(Array.isArray(data) ? data : []);
+        if (pendingRes.status === 'fulfilled' && pendingRes.value) {
+          setPendingArticles(Array.isArray(pendingRes.value) ? pendingRes.value : []);
         }
-        if (activityRes.status === 'fulfilled' && activityRes.value.ok) {
-          const data = await activityRes.value.json();
-          setActivityLogs(Array.isArray(data) ? data : data.logs || []);
+        if (activityRes.status === 'fulfilled' && activityRes.value) {
+          setActivityLogs(Array.isArray(activityRes.value) ? activityRes.value : []);
         }
-        if (settingsRes.status === 'fulfilled' && settingsRes.value.ok) {
-          const data = await settingsRes.value.json();
-          setSettings(data);
+        if (settingsRes.status === 'fulfilled' && settingsRes.value) {
+          setSettings(settingsRes.value);
         }
       } catch {
         // Silently fail

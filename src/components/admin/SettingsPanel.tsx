@@ -11,6 +11,7 @@ import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
 import { useNexusStore } from '@/lib/store';
 import { toast } from '@/hooks/use-toast';
+import { updateSettings as updateSettingsApi } from '@/lib/api';
 
 function formatInterval(minutes: number): string {
   if (minutes < 60) return `${minutes} min`;
@@ -54,30 +55,21 @@ export default function SettingsPanel() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const res = await fetch('/api/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          mode,
-          autoCollect,
-          autoEvaluate,
-          autoRewrite,
-          autoPublish,
-          collectInterval,
-          maxArticlesPerDay,
-          siteName,
-          siteTagline,
-        }),
+      const data = await updateSettingsApi({
+        mode,
+        autoCollect,
+        autoEvaluate,
+        autoRewrite,
+        autoPublish,
+        collectInterval,
+        maxArticlesPerDay,
+        siteName,
+        siteTagline,
       });
-      if (res.ok) {
-        const data = await res.json();
-        setSettings(data);
-        toast({ title: 'Impostazioni salvate', description: 'Le impostazioni sono state aggiornate con successo.' });
-      } else {
-        toast({ title: 'Errore', description: 'Impossibile salvare le impostazioni.', variant: 'destructive' });
-      }
+      setSettings(data);
+      toast({ title: 'Impostazioni salvate', description: 'Le impostazioni sono state aggiornate con successo.' });
     } catch {
-      toast({ title: 'Errore', description: 'Errore di connessione.', variant: 'destructive' });
+      toast({ title: 'Errore', description: 'Impossibile salvare le impostazioni.', variant: 'destructive' });
     } finally {
       setIsSaving(false);
     }
