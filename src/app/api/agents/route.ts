@@ -1,15 +1,11 @@
-import { db } from '@/lib/db';
+import { fetchAgents, updateAgent } from '@/lib/api';
 
 export async function GET() {
   try {
-    const agents = await db.agent.findMany({
-      include: {
-        _count: { select: { articles: true, activityLogs: true } },
-      },
-      orderBy: { createdAt: 'asc' },
-    });
+    const agents = await fetchAgents();
     return Response.json(agents);
   } catch (error) {
+    console.error('GET /api/agents error:', error);
     return Response.json({ error: 'Failed to fetch agents' }, { status: 500 });
   }
 }
@@ -18,18 +14,10 @@ export async function PUT(request: Request) {
   try {
     const body = await request.json();
     const { id, ...data } = body;
-    const agent = await db.agent.update({
-      where: { id },
-      data: {
-        name: data.name,
-        avatar: data.avatar,
-        description: data.description,
-        personality: data.personality,
-        status: data.status,
-      },
-    });
+    const agent = await updateAgent(id, data);
     return Response.json(agent);
   } catch (error) {
+    console.error('PUT /api/agents error:', error);
     return Response.json({ error: 'Failed to update agent' }, { status: 500 });
   }
 }

@@ -1,8 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "standalone",
-  /* config options here */
+  // NO output: "standalone" - Cloudflare Pages gestisce il build da solo
   typescript: {
     ignoreBuildErrors: true,
   },

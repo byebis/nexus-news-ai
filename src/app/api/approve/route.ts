@@ -1,4 +1,4 @@
-import { db } from '@/lib/db';
+import { approveArticle } from '@/lib/api';
 
 export async function POST(request: Request) {
   try {
@@ -8,35 +8,10 @@ export async function POST(request: Request) {
       return Response.json({ error: 'articleId and action required' }, { status: 400 });
     }
 
-    const article = await db.article.findUnique({ where: { id: articleId } });
-    if (!article) return Response.json({ error: 'Article not found' }, { status: 404 });
-
-    // Create or update approval log
-    await db.approvalLog.upsert({
-      where: { articleId },
-      create: {
-        articleId,
-        reviewerAction: action,
-        reviewerNote: note || '',
-        reviewedAt: new Date(),
-      },
-      update: {
-        reviewerAction: action,
-        reviewerNote: note || '',
-        reviewedAt: new Date(),
-      },
-    });
-
-    // Update article status
-    const newStatus = action === 'approved' ? 'approved' : 'rejected';
-    const updated = await db.article.update({
-      where: { id: articleId },
-      data: { status: newStatus },
-      include: { agent: true, publishLogs: true, approvalLog: true },
-    });
-
-    return Response.json(updated);
+    const article = await approveArticle(articleId, action, note);
+    return Response.json(article);
   } catch (error) {
+    console.error('POST /api/approve error:', error);
     return Response.json({ error: 'Failed to process approval' }, { status: 500 });
   }
 }

@@ -1,28 +1,17 @@
-import { db } from '@/lib/db';
+import { fetchArticles } from '@/lib/api';
+import { supabase, generateId } from '@/lib/supabase';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const category = searchParams.get('category');
-    const status = searchParams.get('status');
+    const category = searchParams.get('category') || undefined;
+    const status = searchParams.get('status') || undefined;
     const limit = parseInt(searchParams.get('limit') || '20');
 
-    const where: Record<string, unknown> = {};
-    if (category && category !== 'all') where.category = category;
-    if (status) where.status = status;
-
-    const articles = await db.article.findMany({
-      where,
-      include: {
-        agent: { select: { id: true, name: true, avatar: true, category: true } },
-        publishLogs: true,
-        approvalLog: true,
-      },
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-    });
+    const articles = await fetchArticles({ category, status, limit });
     return Response.json(articles);
   } catch (error) {
+    console.error('GET /api/articles error:', error);
     return Response.json({ error: 'Failed to fetch articles' }, { status: 500 });
   }
 }
@@ -30,27 +19,26 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const article = await db.article.create({
-      data: {
-        title: body.title,
-        subtitle: body.subtitle || '',
-        content: body.content,
-        summary: body.summary || '',
-        category: body.category,
-        agentId: body.agentId,
-        sourceName: body.sourceName || '',
-        sourceUrl: body.sourceUrl || '',
-        imageUrl: body.imageUrl || '',
-        status: body.status || 'draft',
-        qualityScore: body.qualityScore || 0,
-        readTime: body.readTime || 3,
-      },
-      include: {
-        agent: true,
-      },
+    const articleId = generateId();
+    const { error } = await supabase.from('articles').insert({
+      id: articleId,
+      title: body.title,
+      subtitle: body.subtitle || '',
+      content: body.content,
+      summary: body.summary || '',
+      category: body.category,
+      agent_id: body.agentId,
+      source_name: body.sourceName || '',
+      source_url: body.sourceUrl || '',
+      image_url: body.imageUrl || '',
+      quality_score: body.qualityScore || 0,
+      read_time: body.readTime || 3,
+      status: body.status || 'draft',
     });
-    return Response.json(article);
+    if (error) throw error;
+    return Response.json({ success: true, id: articleId });
   } catch (error) {
+    console.error('POST /api/articles error:', error);
     return Response.json({ error: 'Failed to create article' }, { status: 500 });
   }
 }
