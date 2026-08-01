@@ -1,5 +1,5 @@
 import { supabase, generateId, transformRows, toCamelCase } from '@/lib/supabase';
-import { processCategoryForAgent } from '@/lib/ai-engine';
+import { processWithAI } from '@/lib/ai-engine';
 
 // ============================================
 // Types
@@ -304,16 +304,56 @@ export async function collectNews(agentId: string) {
     status: 'info',
   });
 
-  // Process with AI engine
-  const result = processCategoryForAgent(agent.category);
+  // Check for OpenRouter API key
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  const hasKey = apiKey && apiKey.length > 10;
 
-  // Log: evaluating
-  await supabase.from('activity_logs').insert({
-    agent_id: agentId,
-    action: 'evaluating',
-    detail: `Raccolti ${result.collected} articoli, valutati ${result.evaluated}, selezionati ${result.rewritten} per la riscrittura`,
-    status: 'success',
-  });
+  let result;
+  if (hasKey) {
+    // Real AI pipeline
+    result = await processWithAI(agent.category, agent.name, agent.personality, apiKey);
+
+    // Log: AI processing complete
+    const modelInfo = result.modelsUsed.map(m => `${m.phase}: ${m.model}`).join(', ');
+    await supabase.from('activity_logs').insert({
+      agent_id: agentId,
+      action: 'evaluating',
+      detail: `AI: raccolti ${result.collected}, valutati ${result.evaluated}, riscritti ${result.rewritten}` +
+        (modelInfo ? ` | Modelli: ${modelInfo}` : '') +
+        (result.usedFallback ? ' (mock fallback attivato)' : ''),
+      status: result.usedFallback ? 'warning' : 'success',
+    });
+
+    if (result.errors.length > 0) {
+      await supabase.from('activity_logs').insert({
+        agent_id: agentId,
+        action: 'error',
+        detail: `Errori AI: ${result.errors.slice(0, 3).join('; ')}`,
+        status: 'error',
+      });
+    }
+  } else {
+    // No API key — use mock fallback
+    const { processCategoryForAgent } = await import('@/lib/ai-engine-mock');
+    const mockResult = processCategoryForAgent(agent.category);
+    result = {
+      success: false,
+      collected: mockResult.collected,
+      evaluated: mockResult.evaluated,
+      rewritten: mockResult.rewritten,
+      articles: mockResult.articles.map(a => ({ ...a, modelUsed: 'mock-no-key' })),
+      usedFallback: true,
+      modelsUsed: [],
+      errors: ['Nessuna API key OpenRouter configurata'],
+    };
+
+    await supabase.from('activity_logs').insert({
+      agent_id: agentId,
+      action: 'evaluating',
+      detail: `Mock: raccolti ${mockResult.collected}, valutati ${mockResult.evaluated}, selezionati ${mockResult.rewritten} (nessuna API key)`,
+      status: 'warning',
+    });
+  }
 
   const createdArticles = [];
   for (const article of result.articles) {
@@ -367,12 +407,14 @@ export async function collectNews(agentId: string) {
     .eq('id', agentId);
 
   return {
-    success: true,
+    success: result.success,
     collected: result.collected,
     evaluated: result.evaluated,
     created: result.rewritten,
     articles: createdArticles,
     mode: isFullyAutonomous ? 'fully_autonomous' : 'semi_autonomous',
+    usedFallback: result.usedFallback,
+    modelsUsed: result.modelsUsed,
   };
 }
 
