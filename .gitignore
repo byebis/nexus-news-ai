@@ -62,4 +62,4 @@ server.log
 # Internal/debug
 download/
 upload/
-scripts/
+scripts/*.log
