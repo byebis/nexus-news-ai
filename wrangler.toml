@@ -1,10 +1,9 @@
 # Nexus News AI - Cloudflare Pages Config
-# Questo file serve se fai deploy via CLI
-# Se colleghi a GitHub, Cloudflare lo gestisce automaticamente
 
 name = "nexus-news-ai"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = ".open-next"
 
 [vars]
 NODE_ENV = "production"
