@@ -180,7 +180,7 @@ export async function fetchApprovedArticles(): Promise<import('@/lib/store').Art
 }
 
 export async function updateAgent(id: string, data: { name?: string; avatar?: string; description?: string; personality?: string; status?: string }) {
-  const { data, error } = await supabase
+  const { data: result, error } = await supabase
     .from('agents')
     .update({
       name: data.name,
@@ -192,7 +192,7 @@ export async function updateAgent(id: string, data: { name?: string; avatar?: st
     .eq('id', id)
     .select();
   if (error) console.error('updateAgent error:', error);
-  return toCamelCase(data) as any;
+  return toCamelCase(result) as any;
 }
 
 export async function approveArticle(articleId: string, action: string, note?: string) {
