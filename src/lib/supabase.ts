@@ -1,12 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY env vars');
+}
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-
-type CamelCase<S extends string> = S extends `${infer F}_${infer C}` ? `${Lowercase<F>}${Capitalize<C>}` : S;
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -35,5 +36,5 @@ export function transformRows<T>(rows: Record<string, unknown>[]): T[] {
 }
 
 export function generateId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+  return crypto.randomUUID();
 }

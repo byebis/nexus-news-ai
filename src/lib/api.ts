@@ -172,11 +172,11 @@ export async function fetchPendingArticles(): Promise<import('@/lib/store').Arti
 }
 
 export async function fetchApprovedArticles(): Promise<import('@/lib/store').Article[]> {
-  const a = await fetchArticles({ status: 'approved' });
-  const p = await fetchArticles({ status: 'published', limit: 10 });
-  const ids = new Set(a.map(a => a.id));
-  const newOnes = p.filter((a: import('@/lib/store').Article) => !ids.has(a.id));
-  return [...a, ...newOnes];
+  const approved = await fetchArticles({ status: 'approved' });
+  const published = await fetchArticles({ status: 'published', limit: 10 });
+  const ids = new Set(approved.map(a => a.id));
+  const newOnes = published.filter((a: import('@/lib/store').Article) => !ids.has(a.id));
+  return [...approved, ...newOnes];
 }
 
 export async function updateAgent(id: string, data: { name?: string; avatar?: string; description?: string; personality?: string; status?: string }) {
@@ -235,6 +235,7 @@ export async function approveArticle(articleId: string, action: string, note?: s
     .eq('id', articleId)
     .single();
 
+  if (!updated) throw new Error('Article not found after approval');
   return toArticle(updated);
 }
 
@@ -275,6 +276,7 @@ export async function publishArticle(articleId: string, platforms: string[]) {
     .eq('id', articleId)
     .single();
 
+  if (!updated) throw new Error('Article not found after publish');
   return toArticle(updated);
 }
 
@@ -415,8 +417,7 @@ export async function fetchSettings(): Promise<import('@/lib/store').Settings | 
   return toCamelCase(data) as any;
 }
 
-export async function updateSettings(data: Record<string, unknown>) {
-  // Check if settings exist
+export async function updateSettings(settingsData: Record<string, unknown>) {
   const { data: existing } = await supabase
     .from('settings')
     .select('id')
@@ -424,22 +425,22 @@ export async function updateSettings(data: Record<string, unknown>) {
 
   let result;
   if (existing) {
-    const { data, error } = await supabase
+    const { data: updated, error } = await supabase
       .from('settings')
-      .update(data)
+      .update(settingsData)
       .eq('id', existing.id)
       .select()
       .single();
     if (error) throw error;
-    result = data;
+    result = updated;
   } else {
-    const { data, error } = await supabase
+    const { data: inserted, error } = await supabase
       .from('settings')
-      .insert(data)
+      .insert(settingsData)
       .select()
       .single();
     if (error) throw error;
-    result = data;
+    result = inserted;
   }
 
   return toCamelCase(result) as any;

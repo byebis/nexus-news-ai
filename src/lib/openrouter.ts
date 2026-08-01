@@ -5,10 +5,10 @@ const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // Free models - same chain for all phases, fallback order
 export const MODELS = [
-  'inclusionai/ling-3.0-flash:free',
-  'nvidia/nemotron-3-ultra-550b-a55b:free',
-  'nvidia/nemotron-3-super-120b-a12b:free',
-  'google/gemma-4-31b-it:free',
+  'meta-llama/llama-4-scout:free',
+  'google/gemma-3-27b-it:free',
+  'nvidia/llama-3.1-nemotron-70b-instruct:free',
+  'deepseek/deepseek-chat-v3-0324:free',
   'openrouter/free',
 ] as const;
 
@@ -60,7 +60,7 @@ async function callOpenRouter(
       body: JSON.stringify({
         model,
         messages,
-        max_tokens: 4096,
+        max_tokens: 8192,
         temperature: 0.7,
       }),
       signal: controller.signal,
@@ -144,6 +144,12 @@ export function extractJSON(text: string): string {
   // Try to extract from ```json ... ``` block
   const jsonBlock = text.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (jsonBlock?.[1]) return jsonBlock[1].trim();
+  // Try array first (collect phase returns arrays)
+  const firstBracket = text.indexOf('[');
+  const lastBracket = text.lastIndexOf(']');
+  if (firstBracket !== -1 && lastBracket > firstBracket) {
+    return text.slice(firstBracket, lastBracket + 1);
+  }
   // Try to find first { ... } block
   const firstBrace = text.indexOf('{');
   const lastBrace = text.lastIndexOf('}');
