@@ -3,27 +3,23 @@
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
-// Model chains for each phase - ordered by preference
-export const MODEL_CHAINS = {
-  collect: [
-    'google/gemini-2.5-flash',
-    'anthropic/claude-3.5-sonnet',
-    'openai/gpt-4o-mini',
-    'meta-llama/llama-3.1-70b-instruct',
-  ],
-  evaluate: [
-    'openai/gpt-4o-mini',
-    'google/gemini-2.5-flash',
-    'anthropic/claude-3.5-sonnet',
-  ],
-  rewrite: [
-    'anthropic/claude-3.5-sonnet',
-    'google/gemini-2.5-flash',
-    'openai/gpt-4o-mini',
-  ],
-} as const;
+// Free models - same chain for all phases, fallback order
+export const MODELS = [
+  'inclusionai/ling-3.0-flash:free',
+  'nvidia/nemotron-3-ultra-550b-a55b:free',
+  'nvidia/nemotron-3-super-120b-a12b:free',
+  'google/gemma-4-31b-it:free',
+  'openrouter/free',
+] as const;
 
-export type Phase = keyof typeof MODEL_CHAINS;
+export type Phase = 'collect' | 'evaluate' | 'rewrite';
+
+// Same chain for every phase
+export const MODEL_CHAINS: Record<Phase, readonly string[]> = {
+  collect: [...MODELS],
+  evaluate: [...MODELS],
+  rewrite: [...MODELS],
+};
 
 interface ChatMessage {
   role: 'system' | 'user' | 'assistant';

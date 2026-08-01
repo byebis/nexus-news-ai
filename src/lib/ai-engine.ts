@@ -1,8 +1,6 @@
-// AI Engine - Real AI news collection, evaluation, and rewriting via OpenRouter
-// Falls back to mock data if all models fail
+// AI Engine - Real AI news pipeline via OpenRouter (NO mocks)
 
 import { chatWithFallback, extractJSON, type Phase } from './openrouter';
-import { processCategoryForAgent as mockProcess, NEWS_TEMPLATES, type AIProcessingResult } from './ai-engine-mock';
 
 // ============================================
 // PROMPTS
@@ -30,8 +28,7 @@ Requisiti:
 - Il contenuto deve essere dettagliato (minimo 300 parole per articolo)
 - Includi dati specifici, nomi, cifre dove possibile
 - Varia le fonti e le prospettive
-- NON includere commenti o testo fuori dal JSON
-- Se non sei sicuro di una notizia recente, usa il tuo conhecimento fino alla tua data di training ma segnalalo nel content`;
+- NON includere commenti o testo fuori dal JSON`;
 }
 
 function getEvaluatePrompt(article: { title: string; summary: string; content: string }, category: string): string {
@@ -100,8 +97,17 @@ interface CollectedArticle {
   sourceUrl: string;
 }
 
-interface ProcessedArticle extends AIProcessingResult['articles'][number] {
- modelUsed: string;
+export interface ProcessedArticle {
+  title: string;
+  subtitle: string;
+  content: string;
+  summary: string;
+  category: string;
+  sourceName: string;
+  sourceUrl: string;
+  qualityScore: number;
+  readTime: number;
+  modelUsed: string;
 }
 
 export interface RealAIResult {
@@ -110,7 +116,6 @@ export interface RealAIResult {
   evaluated: number;
   rewritten: number;
   articles: ProcessedArticle[];
-  usedFallback: boolean;
   modelsUsed: { phase: Phase; model: string }[];
   errors: string[];
 }
@@ -132,19 +137,10 @@ export async function processWithAI(
   );
 
   if (!collectResult.success || !collectResult.response) {
- errors.push(`Collect fallito: ${collectResult.errors.map(e => e.error).join(', ')}`);
-    // Fallback to mock
-    const mockResult = processCategoryForAgent(category);
-    return {
-      success: false,
-      collected: mockResult.collected,
-      evaluated: mockResult.evaluated,
-      rewritten: mockResult.rewritten,
-      articles: mockResult.articles.map(a => ({ ...a, modelUsed: 'mock-fallback' })),
-      usedFallback: true,
-      modelsUsed: [],
-      errors,
-    };
+    throw new Error(
+      `Impossibile raccogliere notizie: tutti i modelli hanno fallito.\n` +
+      collectResult.errors.map(e => `- ${e.model}: ${e.error}`).join('\n')
+    );
   }
 
   modelsUsed.push({ phase: 'collect', model: collectResult.response.model });
@@ -155,22 +151,11 @@ export async function processWithAI(
     collected = JSON.parse(jsonStr);
     if (!Array.isArray(collected)) collected = [collected];
   } catch {
-    errors.push('Impossibile parsare la risposta Collect');
-    const mockResult = processCategoryForAgent(category);
-    return {
-      success: false,
-      collected: mockResult.collected,
-      evaluated: mockResult.evaluated,
-      rewritten: mockResult.rewritten,
-      articles: mockResult.articles.map(a => ({ ...a, modelUsed: 'mock-fallback' })),
-      usedFallback: true,
-      modelsUsed,
-      errors,
-    };
+    throw new Error('Impossibile parsare la risposta Collect dal modello ' + collectResult.response.model);
   }
 
   // ---- PHASE 2: EVALUATE ----
-  const evaluated: Array<{ article: CollectedArticle; score: number; model: string }> = [];
+  const evaluated: Array<{ article: CollectedArticle; score: number }> = [];
 
   for (const article of collected) {
     const evalResult = await chatWithFallback(
@@ -186,15 +171,13 @@ export async function processWithAI(
       evaluated.push({
         article,
         score: isNaN(score) ? 70 : Math.min(Math.max(score, 0), 100),
-        model: evalResult.response.model,
       });
     } else {
-      errors.push(`Evaluate fallito per "${article.title.slice(0, 40)}"`);
-      evaluated.push({ article, score: 70, model: 'fallback-score' });
+      errors.push(`Evaluate fallito per "${article.title.slice(0, 40)}": ${evalResult.errors.map(e => e.error).join(', ')}`);
+      evaluated.push({ article, score: 70 });
     }
   }
 
-  // Filter by threshold
   const passing = evaluated.filter(e => e.score >= 50);
 
   // ---- PHASE 3: REWRITE ----
@@ -227,8 +210,6 @@ export async function processWithAI(
         });
       } catch {
         errors.push(`Rewrite parse fallito per "${article.title.slice(0, 40)}"`);
-        // Use original article with minor polish
-        const readTime = Math.max(2, Math.ceil(article.content.split(/\s+/).length / 200));
         finalArticles.push({
           title: article.title,
           subtitle: '',
@@ -238,13 +219,12 @@ export async function processWithAI(
           sourceName: article.sourceName,
           sourceUrl: article.sourceUrl,
           qualityScore: score,
-          readTime,
-          modelUsed: 'parse-fallback',
+          readTime: Math.max(2, Math.ceil(article.content.split(/\s+/).length / 200)),
+          modelUsed: rewriteResult.response.model + ' (raw)',
         });
       }
     } else {
       errors.push(`Rewrite fallito per "${article.title.slice(0, 40)}"`);
-      const readTime = Math.max(2, Math.ceil(article.content.split(/\s+/).length / 200));
       finalArticles.push({
         title: article.title,
         subtitle: '',
@@ -254,8 +234,8 @@ export async function processWithAI(
         sourceName: article.sourceName,
         sourceUrl: article.sourceUrl,
         qualityScore: score,
-        readTime,
-        modelUsed: 'rewrite-fallback',
+        readTime: Math.max(2, Math.ceil(article.content.split(/\s+/).length / 200)),
+        modelUsed: 'rewrite-failed',
       });
     }
   }
@@ -266,7 +246,6 @@ export async function processWithAI(
     evaluated: evaluated.length,
     rewritten: finalArticles.length,
     articles: finalArticles,
-    usedFallback: false,
     modelsUsed,
     errors,
   };
