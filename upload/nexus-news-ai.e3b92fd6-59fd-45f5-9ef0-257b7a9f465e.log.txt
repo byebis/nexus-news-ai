@@ -1,0 +1,76 @@
+2026-07-31T00:49:58.769013Z	Cloning repository...
+2026-07-31T00:50:00.109376Z	From https://github.com/byebis/nexus-news-ai
+2026-07-31T00:50:00.109686Z	 * branch            08dc2d2f5befe0435cef1458624ebca9b320f4d3 -> FETCH_HEAD
+2026-07-31T00:50:00.109762Z	
+2026-07-31T00:50:00.140768Z	HEAD is now at 08dc2d2 trigger rebuild
+2026-07-31T00:50:00.141158Z	
+2026-07-31T00:50:00.46591Z	
+2026-07-31T00:50:00.466425Z	Using v2 root directory strategy
+2026-07-31T00:50:00.482952Z	Success: Finished cloning repository files
+2026-07-31T00:50:02.154169Z	Checking for configuration in a Wrangler configuration file (BETA)
+2026-07-31T00:50:02.154939Z	
+2026-07-31T00:50:02.155283Z	Found wrangler.toml file. Reading build configuration...
+2026-07-31T00:50:02.332718Z	A Wrangler configuration file was found but it does not appear to be valid. Did you mean to use wrangler.toml to configure Pages? If so, then make sure the file is valid and contains the `pages_build_output_dir` property. Skipping file and continuing.
+2026-07-31T00:50:02.891046Z	Detected the following tools from environment: npm@10.9.2, nodejs@22.16.0
+2026-07-31T00:50:02.891465Z	Installing project dependencies: npm clean-install --progress=false
+2026-07-31T00:50:42.197874Z	
+2026-07-31T00:50:42.198336Z	added 1062 packages, and audited 1063 packages in 38s
+2026-07-31T00:50:42.198445Z	
+2026-07-31T00:50:42.198506Z	319 packages are looking for funding
+2026-07-31T00:50:42.198554Z	  run `npm fund` for details
+2026-07-31T00:50:42.265119Z	
+2026-07-31T00:50:42.265616Z	21 vulnerabilities (2 low, 6 moderate, 13 high)
+2026-07-31T00:50:42.265791Z	
+2026-07-31T00:50:42.266132Z	To address issues that do not require attention, run:
+2026-07-31T00:50:42.266206Z	  npm audit fix
+2026-07-31T00:50:42.266277Z	
+2026-07-31T00:50:42.266361Z	To address all issues (including breaking changes), run:
+2026-07-31T00:50:42.266405Z	  npm audit fix --force
+2026-07-31T00:50:42.266454Z	
+2026-07-31T00:50:42.266508Z	Run `npm audit` for details.
+2026-07-31T00:50:42.359148Z	Executing user command: npx @opennextjs/cloudflare build
+2026-07-31T00:50:44.715914Z	
+2026-07-31T00:50:44.716256Z	┌─────────────────────────────┐
+2026-07-31T00:50:44.716355Z	│ OpenNext — Cloudflare build │
+2026-07-31T00:50:44.716485Z	└─────────────────────────────┘
+2026-07-31T00:50:44.71656Z	
+2026-07-31T00:50:44.845132Z	file:///opt/buildhome/repo/node_modules/@opennextjs/cloudflare/dist/cli/build/utils/ensure-cf-config.js:62
+2026-07-31T00:50:44.84549Z	        throw new Error(errorMessage);
+2026-07-31T00:50:44.845689Z	              ^
+2026-07-31T00:50:44.845783Z	
+2026-07-31T00:50:44.845883Z	Error: The `open-next.config.ts` should have a default export like this:
+2026-07-31T00:50:44.846037Z	
+2026-07-31T00:50:44.846102Z	{
+2026-07-31T00:50:44.846145Z	  default: {
+2026-07-31T00:50:44.84618Z	    override: {
+2026-07-31T00:50:44.846218Z	      wrapper: "cloudflare-node",
+2026-07-31T00:50:44.846268Z	      converter: "edge",
+2026-07-31T00:50:44.846322Z	      proxyExternalRequest: "fetch",
+2026-07-31T00:50:44.846428Z	      incrementalCache: "dummy" | function,
+2026-07-31T00:50:44.846491Z	      tagCache: "dummy" | function,
+2026-07-31T00:50:44.846527Z	      queue: "dummy" | "direct" | function,
+2026-07-31T00:50:44.846567Z	    },
+2026-07-31T00:50:44.846601Z	  },
+2026-07-31T00:50:44.846633Z	  edgeExternals: ["node:crypto"],
+2026-07-31T00:50:44.846951Z	  middleware: {
+2026-07-31T00:50:44.847395Z	    external: true,
+2026-07-31T00:50:44.847454Z	    override: {
+2026-07-31T00:50:44.847667Z	      wrapper: "cloudflare-edge",
+2026-07-31T00:50:44.847737Z	      converter: "edge",
+2026-07-31T00:50:44.847871Z	      proxyExternalRequest: "fetch",
+2026-07-31T00:50:44.848126Z	      incrementalCache: "dummy" | function,
+2026-07-31T00:50:44.848197Z	      tagCache: "dummy" | function,
+2026-07-31T00:50:44.848421Z	      queue: "dummy" | "direct" | function,
+2026-07-31T00:50:44.848876Z	    },
+2026-07-31T00:50:44.848985Z	  },
+2026-07-31T00:50:44.8491Z	}
+2026-07-31T00:50:44.84925Z	
+2026-07-31T00:50:44.849414Z	
+2026-07-31T00:50:44.849479Z	    at ensureCloudflareConfig (file:///opt/buildhome/repo/node_modules/@opennextjs/cloudflare/dist/cli/build/utils/ensure-cf-config.js:62:15)
+2026-07-31T00:50:44.849778Z	    at compileConfig (file:///opt/buildhome/repo/node_modules/@opennextjs/cloudflare/dist/cli/commands/utils/utils.js:58:5)
+2026-07-31T00:50:44.849892Z	    at async buildCommand (file:///opt/buildhome/repo/node_modules/@opennextjs/cloudflare/dist/cli/commands/build.js:14:34)
+2026-07-31T00:50:44.850103Z	
+2026-07-31T00:50:44.850187Z	Node.js v22.16.0
+2026-07-31T00:50:44.892386Z	Failed: Error while executing user command. Exited with error code: 1
+2026-07-31T00:50:44.899836Z	Failed: build command exited with code: 1
+2026-07-31T00:50:45.564706Z	Failed: error occurred while running build command

@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Agent {
+  id          String   @id @default(cuid())
+  name        String
+  avatar      String   @default("")
+  category    String   @unique
+  description String   @default("")
+  status      String   @default("active") // active, paused, error
+  personality String   @default("professionale ed oggettivo")
+  lastRun     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  articles Article[]
+  activityLogs ActivityLog[]
+}
+
+model Article {
+  id            String   @id @default(cuid())
+  title         String
+  subtitle      String   @default("")
+  content       String
+  summary       String   @default("")
+  category      String
+  agentId       String
+  sourceName    String   @default("")
+  sourceUrl     String   @default("")
+  imageUrl      String   @default("")
+  status        String   @default("draft") // draft, pending_approval, approved, published, rejected
+  qualityScore  Float    @default(0)
+  readTime      Int      @default(3)
+  publishedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  agent         Agent    @relation(fields: [agentId], references: [id])
+  publishLogs   PublishLog[]
+  approvalLog   ApprovalLog?
+}
+
+model PublishLog {
+  id          String   @id @default(cuid())
+  articleId   String
+  platform    String   // blog, twitter, facebook, linkedin, instagram
+  status      String   @default("pending") // pending, published, failed
+  postId      String   @default("")
+  postUrl     String   @default("")
+  error       String   @default("")
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  article     Article  @relation(fields: [articleId], references: [id])
+}
+
+model ApprovalLog {
+  id          String   @id @default(cuid())
+  articleId   String   @unique
+  reviewerAction String @default("") // approved, rejected
+  reviewerNote  String  @default("")
+  reviewedAt  DateTime?
+  createdAt   DateTime @default(now())
+
+  article     Article  @relation(fields: [articleId], references: [id])
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  agentId   String
+  action    String   // collecting, evaluating, rewriting, publishing
+  detail    String   @default("")
+  status    String   @default("info") // info, success, warning, error
+  createdAt DateTime @default(now())
+
+  agent     Agent    @relation(fields: [agentId], references: [id])
+}
+
+model Settings {
+  id              String   @id @default(cuid())
+  mode            String   @default("semi_autonomous") // semi_autonomous, fully_autonomous
+  autoCollect     Boolean  @default(true)
+  autoEvaluate    Boolean  @default(true)
+  autoRewrite     Boolean  @default(true)
+  autoPublish     Boolean  @default(false)
+  collectInterval Int      @default(3600) // seconds
+  maxArticlesPerDay Int    @default(10)
+  socialPlatforms String   @default("blog,twitter,facebook,linkedin,instagram")
+  siteName        String   @default("Nexus News AI")
+  siteTagline     String   @default("Il giornale di nuova generazione")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

@@ -1,0 +1,110 @@
+2026-08-01T09:57:08.765754Z	Cloning repository...
+2026-08-01T09:57:09.531596Z	From https://github.com/byebis/nexus-news-ai
+2026-08-01T09:57:09.531869Z	 * branch            8047ae944daae6a43018b99d1292d2387123d5d8 -> FETCH_HEAD
+2026-08-01T09:57:09.531939Z	
+2026-08-01T09:57:09.553015Z	HEAD is now at 8047ae9 fix: rename conflicting 'data' variable in updateAgent
+2026-08-01T09:57:09.553268Z	
+2026-08-01T09:57:09.590234Z	
+2026-08-01T09:57:09.590528Z	Using v2 root directory strategy
+2026-08-01T09:57:09.601373Z	Success: Finished cloning repository files
+2026-08-01T09:57:10.859313Z	Checking for configuration in a Wrangler configuration file (BETA)
+2026-08-01T09:57:10.859785Z	
+2026-08-01T09:57:10.859908Z	Found wrangler.toml file. Reading build configuration...
+2026-08-01T09:57:10.97959Z	A Wrangler configuration file was found but it does not appear to be valid. Did you mean to use wrangler.toml to configure Pages? If so, then make sure the file is valid and contains the `pages_build_output_dir` property. Skipping file and continuing.
+2026-08-01T09:57:11.137781Z	Detected the following tools from environment: npm@10.9.2, nodejs@22.16.0
+2026-08-01T09:57:11.138155Z	Installing project dependencies: npm clean-install --progress=false
+2026-08-01T09:57:43.874149Z	
+2026-08-01T09:57:43.874486Z	added 1062 packages, and audited 1063 packages in 31s
+2026-08-01T09:57:43.87455Z	
+2026-08-01T09:57:43.874591Z	319 packages are looking for funding
+2026-08-01T09:57:43.874628Z	  run `npm fund` for details
+2026-08-01T09:57:43.933327Z	
+2026-08-01T09:57:43.933568Z	21 vulnerabilities (2 low, 6 moderate, 13 high)
+2026-08-01T09:57:43.933611Z	
+2026-08-01T09:57:43.933644Z	To address issues that do not require attention, run:
+2026-08-01T09:57:43.933674Z	  npm audit fix
+2026-08-01T09:57:43.933705Z	
+2026-08-01T09:57:43.933736Z	To address all issues (including breaking changes), run:
+2026-08-01T09:57:43.933766Z	  npm audit fix --force
+2026-08-01T09:57:43.933794Z	
+2026-08-01T09:57:43.933829Z	Run `npm audit` for details.
+2026-08-01T09:57:44.017359Z	Executing user command: npx @opennextjs/cloudflare build
+2026-08-01T09:57:46.385073Z	
+2026-08-01T09:57:46.385411Z	┌─────────────────────────────┐
+2026-08-01T09:57:46.385519Z	│ OpenNext — Cloudflare build │
+2026-08-01T09:57:46.385569Z	└─────────────────────────────┘
+2026-08-01T09:57:46.385601Z	
+2026-08-01T09:57:46.492877Z	App directory: /opt/buildhome/repo
+2026-08-01T09:57:46.4932Z	Next.js version : 16.2.12
+2026-08-01T09:57:46.494398Z	@opennextjs/cloudflare version: 1.20.2
+2026-08-01T09:57:46.494557Z	@opennextjs/aws version: 4.1.0
+2026-08-01T09:57:46.495871Z	WARN workerd compatibility_date: 2025-01-01, consider updating your wrangler config to a more recent date to benefit from the latest features and fixes.
+2026-08-01T09:57:46.497Z	
+2026-08-01T09:57:46.497126Z	┌─────────────────────────────────┐
+2026-08-01T09:57:46.497244Z	│ OpenNext — Building Next.js app │
+2026-08-01T09:57:46.497309Z	└─────────────────────────────────┘
+2026-08-01T09:57:46.497356Z	
+2026-08-01T09:57:46.657696Z	$ next build
+2026-08-01T09:57:47.058289Z	⚠ No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
+2026-08-01T09:57:47.062326Z	Attention: Next.js now collects completely anonymous telemetry regarding usage.
+2026-08-01T09:57:47.062581Z	This information is used to shape Next.js' roadmap and prioritize features.
+2026-08-01T09:57:47.062645Z	You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+2026-08-01T09:57:47.062695Z	https://nextjs.org/telemetry
+2026-08-01T09:57:47.062731Z	
+2026-08-01T09:57:47.07517Z	▲ Next.js 16.2.12 (Turbopack)
+2026-08-01T09:57:47.075428Z	- Environments: .env
+2026-08-01T09:57:47.075534Z	
+2026-08-01T09:57:47.139249Z	  Creating an optimized production build ...
+2026-08-01T09:57:51.967461Z	✓ Compiled successfully in 4.6s
+2026-08-01T09:57:51.973158Z	  Skipping validation of types
+2026-08-01T09:57:51.988479Z	  Finished TypeScript config validation in 14ms ...
+2026-08-01T09:57:51.989205Z	  Collecting page data using 3 workers ...
+2026-08-01T09:57:52.546381Z	  Generating static pages using 3 workers (0/11) ...
+2026-08-01T09:57:52.586051Z	  Generating static pages using 3 workers (2/11) 
+2026-08-01T09:57:52.591615Z	  Generating static pages using 3 workers (5/11) 
+2026-08-01T09:57:52.677929Z	  Generating static pages using 3 workers (8/11) 
+2026-08-01T09:57:52.742911Z	✓ Generating static pages using 3 workers (11/11) in 197ms
+2026-08-01T09:57:52.748111Z	  Finalizing page optimization ...
+2026-08-01T09:57:52.917416Z	
+2026-08-01T09:57:52.919329Z	Route (app)
+2026-08-01T09:57:52.919477Z	┌ ○ /
+2026-08-01T09:57:52.919542Z	├ ○ /_not-found
+2026-08-01T09:57:52.919589Z	├ ƒ /api
+2026-08-01T09:57:52.91963Z	├ ƒ /api/activity
+2026-08-01T09:57:52.919668Z	├ ƒ /api/agents
+2026-08-01T09:57:52.91971Z	├ ƒ /api/approve
+2026-08-01T09:57:52.919752Z	├ ƒ /api/articles
+2026-08-01T09:57:52.9198Z	├ ƒ /api/articles/[id]
+2026-08-01T09:57:52.919843Z	├ ƒ /api/collect
+2026-08-01T09:57:52.919921Z	├ ƒ /api/publish
+2026-08-01T09:57:52.919966Z	└ ƒ /api/settings
+2026-08-01T09:57:52.92Z	
+2026-08-01T09:57:52.92003Z	
+2026-08-01T09:57:52.920063Z	○  (Static)   prerendered as static content
+2026-08-01T09:57:52.920097Z	ƒ  (Dynamic)  server-rendered on demand
+2026-08-01T09:57:52.920137Z	
+2026-08-01T09:57:52.958388Z	
+2026-08-01T09:57:52.958635Z	┌──────────────────────────────┐
+2026-08-01T09:57:52.958706Z	│ OpenNext — Generating bundle │
+2026-08-01T09:57:52.958759Z	└──────────────────────────────┘
+2026-08-01T09:57:52.958812Z	
+2026-08-01T09:57:53.003768Z	Bundling middleware function...
+2026-08-01T09:57:53.027703Z	Bundling static assets...
+2026-08-01T09:57:53.03462Z	Bundling cache assets...
+2026-08-01T09:57:53.042855Z	Building server function: default...
+2026-08-01T09:57:55.868882Z	Applying code patches: 2.607s
+2026-08-01T09:57:56.050301Z	# copyPackageTemplateFiles
+2026-08-01T09:57:56.053559Z	[35m⚙️ Bundling the OpenNext server...
+2026-08-01T09:57:56.053721Z	[0m
+2026-08-01T09:57:57.77204Z	[35mWorker saved in `.open-next/worker.js` 🚀
+2026-08-01T09:57:57.772301Z	[0m
+2026-08-01T09:57:57.772362Z	OpenNext build complete.
+2026-08-01T09:57:57.878256Z	Finished
+2026-08-01T09:57:58.367028Z	Checking for configuration in a Wrangler configuration file (BETA)
+2026-08-01T09:57:58.367458Z	
+2026-08-01T09:57:58.367534Z	Found wrangler.toml file. Reading build configuration...
+2026-08-01T09:57:58.479395Z	A Wrangler configuration file was found but it does not appear to be valid. Did you mean to use wrangler.toml to configure Pages? If so, then make sure the file is valid and contains the `pages_build_output_dir` property. Skipping file and continuing.
+2026-08-01T09:57:58.480037Z	Note: No functions dir at /functions found. Skipping.
+2026-08-01T09:57:58.48014Z	Validating asset output directory
+2026-08-01T09:57:58.480206Z	Error: Output directory ".open-next/worker" not found.
+2026-08-01T09:57:59.193528Z	Failed: build output directory not found

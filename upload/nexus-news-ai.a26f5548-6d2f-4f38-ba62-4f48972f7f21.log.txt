@@ -1,0 +1,114 @@
+2026-07-31T14:42:44.720178Z	Cloning repository...
+2026-07-31T14:42:45.533638Z	From https://github.com/byebis/nexus-news-ai
+2026-07-31T14:42:45.53388Z	 * branch            f02c0dd039356e47def5ab7a28ff09ba3ff90b06 -> FETCH_HEAD
+2026-07-31T14:42:45.533928Z	
+2026-07-31T14:42:45.554787Z	HEAD is now at f02c0dd fix: add edgeExternals node:crypto to open-next config
+2026-07-31T14:42:45.555072Z	
+2026-07-31T14:42:45.593308Z	
+2026-07-31T14:42:45.593612Z	Using v2 root directory strategy
+2026-07-31T14:42:45.606898Z	Success: Finished cloning repository files
+2026-07-31T14:42:47.131665Z	Checking for configuration in a Wrangler configuration file (BETA)
+2026-07-31T14:42:47.132242Z	
+2026-07-31T14:42:47.133186Z	Found wrangler.toml file. Reading build configuration...
+2026-07-31T14:42:47.280192Z	A Wrangler configuration file was found but it does not appear to be valid. Did you mean to use wrangler.toml to configure Pages? If so, then make sure the file is valid and contains the `pages_build_output_dir` property. Skipping file and continuing.
+2026-07-31T14:42:47.530494Z	Detected the following tools from environment: npm@10.9.2, nodejs@22.16.0
+2026-07-31T14:42:47.530946Z	Installing project dependencies: npm clean-install --progress=false
+2026-07-31T14:43:21.998805Z	
+2026-07-31T14:43:21.999422Z	added 1062 packages, and audited 1063 packages in 34s
+2026-07-31T14:43:21.999566Z	
+2026-07-31T14:43:21.999635Z	319 packages are looking for funding
+2026-07-31T14:43:21.999696Z	  run `npm fund` for details
+2026-07-31T14:43:22.064609Z	
+2026-07-31T14:43:22.064989Z	21 vulnerabilities (2 low, 6 moderate, 13 high)
+2026-07-31T14:43:22.065112Z	
+2026-07-31T14:43:22.065212Z	To address issues that do not require attention, run:
+2026-07-31T14:43:22.065311Z	  npm audit fix
+2026-07-31T14:43:22.065457Z	
+2026-07-31T14:43:22.065523Z	To address all issues (including breaking changes), run:
+2026-07-31T14:43:22.065561Z	  npm audit fix --force
+2026-07-31T14:43:22.065589Z	
+2026-07-31T14:43:22.065706Z	Run `npm audit` for details.
+2026-07-31T14:43:22.173891Z	Executing user command: npx @opennextjs/cloudflare build
+2026-07-31T14:43:24.672687Z	
+2026-07-31T14:43:24.673063Z	┌─────────────────────────────┐
+2026-07-31T14:43:24.67318Z	│ OpenNext — Cloudflare build │
+2026-07-31T14:43:24.673267Z	└─────────────────────────────┘
+2026-07-31T14:43:24.673903Z	
+2026-07-31T14:43:24.812938Z	App directory: /opt/buildhome/repo
+2026-07-31T14:43:24.813301Z	Next.js version : 16.2.12
+2026-07-31T14:43:24.815207Z	@opennextjs/cloudflare version: 1.20.2
+2026-07-31T14:43:24.815375Z	@opennextjs/aws version: 4.1.0
+2026-07-31T14:43:24.817482Z	WARN workerd compatibility_date: 2025-01-01, consider updating your wrangler config to a more recent date to benefit from the latest features and fixes.
+2026-07-31T14:43:24.818391Z	
+2026-07-31T14:43:24.818538Z	┌─────────────────────────────────┐
+2026-07-31T14:43:24.81875Z	│ OpenNext — Building Next.js app │
+2026-07-31T14:43:24.818887Z	└─────────────────────────────────┘
+2026-07-31T14:43:24.819001Z	
+2026-07-31T14:43:25.35035Z	$ next build
+2026-07-31T14:43:25.826191Z	⚠ No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
+2026-07-31T14:43:25.831534Z	Attention: Next.js now collects completely anonymous telemetry regarding usage.
+2026-07-31T14:43:25.831708Z	This information is used to shape Next.js' roadmap and prioritize features.
+2026-07-31T14:43:25.831775Z	You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+2026-07-31T14:43:25.831885Z	https://nextjs.org/telemetry
+2026-07-31T14:43:25.831944Z	
+2026-07-31T14:43:25.846704Z	▲ Next.js 16.2.12 (Turbopack)
+2026-07-31T14:43:25.846933Z	- Environments: .env
+2026-07-31T14:43:25.84703Z	
+2026-07-31T14:43:25.935092Z	  Creating an optimized production build ...
+2026-07-31T14:43:31.897556Z	
+2026-07-31T14:43:31.898075Z	> Build error occurred
+2026-07-31T14:43:31.900455Z	Error: Turbopack build failed with 1 errors:
+2026-07-31T14:43:31.900642Z	./src/lib/api.ts:183:11
+2026-07-31T14:43:31.901044Z	the name `data` is defined multiple times
+2026-07-31T14:43:31.901261Z	  [90m181 |[0m
+2026-07-31T14:43:31.901392Z	  [90m182 |[0m [36mexport[0m [36masync[0m [36mfunction[0m updateAgent(id: string, data: { name?: string; avatar?: string; des...
+2026-07-31T14:43:31.90153Z	[31m[1m>[0m [90m183 |[0m   [36mconst[0m { data, error } = [36mawait[0m supabase
+2026-07-31T14:43:31.901691Z	  [90m    |[0m           [31m[1m^^^^[0m
+2026-07-31T14:43:31.901817Z	  [90m184 |[0m     .[36mfrom[0m([32m'agents'[0m)
+2026-07-31T14:43:31.901921Z	  [90m185 |[0m     .update({
+2026-07-31T14:43:31.901962Z	  [90m186 |[0m       name: data.name,
+2026-07-31T14:43:31.902002Z	
+2026-07-31T14:43:31.902047Z	Ecmascript file had an error
+2026-07-31T14:43:31.902081Z	
+2026-07-31T14:43:31.902112Z	Import traces:
+2026-07-31T14:43:31.902152Z	  App Route:
+2026-07-31T14:43:31.90314Z	    ./src/lib/api.ts
+2026-07-31T14:43:31.903502Z	    ./src/app/api/settings/route.ts
+2026-07-31T14:43:31.903925Z	
+2026-07-31T14:43:31.90399Z	  Client Component Browser:
+2026-07-31T14:43:31.904073Z	    ./src/lib/api.ts [Client Component Browser]
+2026-07-31T14:43:31.904124Z	    ./src/app/page.tsx [Client Component Browser]
+2026-07-31T14:43:31.904185Z	    ./src/app/page.tsx [Server Component]
+2026-07-31T14:43:31.904233Z	
+2026-07-31T14:43:31.904268Z	  Client Component SSR:
+2026-07-31T14:43:31.904309Z	    ./src/lib/api.ts [Client Component SSR]
+2026-07-31T14:43:31.904408Z	    ./src/app/page.tsx [Client Component SSR]
+2026-07-31T14:43:31.904506Z	    ./src/app/page.tsx [Server Component]
+2026-07-31T14:43:31.904576Z	
+2026-07-31T14:43:31.904632Z	
+2026-07-31T14:43:31.904687Z	    at <unknown> (./src/lib/api.ts:183:11)
+2026-07-31T14:43:32.002885Z	error: script "build" exited with code 1
+2026-07-31T14:43:32.006123Z	node:internal/errors:983
+2026-07-31T14:43:32.006354Z	  const err = new Error(message);
+2026-07-31T14:43:32.006402Z	              ^
+2026-07-31T14:43:32.00644Z	
+2026-07-31T14:43:32.006473Z	Error: Command failed: bun run build
+2026-07-31T14:43:32.006503Z	    at genericNodeError (node:internal/errors:983:15)
+2026-07-31T14:43:32.006532Z	    at wrappedFn (node:internal/errors:537:14)
+2026-07-31T14:43:32.006559Z	    at checkExecSyncError (node:child_process:882:11)
+2026-07-31T14:43:32.006586Z	    at Object.execSync (node:child_process:954:15)
+2026-07-31T14:43:32.006613Z	    at buildNextjsApp (file:///opt/buildhome/repo/node_modules/@opennextjs/aws/dist/build/buildNextApp.js:15:8)
+2026-07-31T14:43:32.006648Z	    at build (file:///opt/buildhome/repo/node_modules/@opennextjs/cloudflare/dist/cli/build/build.js:63:9)
+2026-07-31T14:43:32.006697Z	    at async buildCommand (file:///opt/buildhome/repo/node_modules/@opennextjs/cloudflare/dist/cli/commands/build.js:40:5) {
+2026-07-31T14:43:32.006736Z	  status: 1,
+2026-07-31T14:43:32.006768Z	  signal: null,
+2026-07-31T14:43:32.006806Z	  output: [ null, null, null ],
+2026-07-31T14:43:32.006876Z	  pid: 1092,
+2026-07-31T14:43:32.006921Z	  stdout: null,
+2026-07-31T14:43:32.006979Z	  stderr: null
+2026-07-31T14:43:32.007025Z	}
+2026-07-31T14:43:32.007059Z	
+2026-07-31T14:43:32.007095Z	Node.js v22.16.0
+2026-07-31T14:43:32.053071Z	Failed: Error while executing user command. Exited with error code: 1
+2026-07-31T14:43:32.059771Z	Failed: build command exited with code: 1
+2026-07-31T14:43:32.729648Z	Failed: error occurred while running build command

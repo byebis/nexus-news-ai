@@ -1,0 +1,119 @@
+2026-08-01T14:51:22.853105Z	Cloning repository...
+2026-08-01T14:51:23.933565Z	From https://github.com/byebis/nexus-news-ai
+2026-08-01T14:51:23.9339Z	 * branch            26c3e33622d9ded365b1bc941fd46fe2844ddc87 -> FETCH_HEAD
+2026-08-01T14:51:23.933983Z	
+2026-08-01T14:51:23.955787Z	HEAD is now at 26c3e33 fix: remove Durable Object imports from _worker.js for CF Pages
+2026-08-01T14:51:23.956031Z	
+2026-08-01T14:51:23.989632Z	
+2026-08-01T14:51:23.989894Z	Using v2 root directory strategy
+2026-08-01T14:51:24.000263Z	Success: Finished cloning repository files
+2026-08-01T14:51:25.344191Z	Checking for configuration in a Wrangler configuration file (BETA)
+2026-08-01T14:51:25.344594Z	
+2026-08-01T14:51:25.344849Z	Found wrangler.toml file. Reading build configuration...
+2026-08-01T14:51:25.350409Z	pages_build_output_dir: .open-next
+2026-08-01T14:51:25.350949Z	Build environment variables: 
+2026-08-01T14:51:25.351054Z	  - NODE_ENV: production
+2026-08-01T14:51:25.505164Z	Successfully read the Wrangler configuration file.
+2026-08-01T14:51:25.62751Z	Detected the following tools from environment: npm@10.9.2, nodejs@22.16.0
+2026-08-01T14:51:25.627956Z	Installing project dependencies: npm clean-install --progress=false
+2026-08-01T14:51:29.567876Z	npm warn deprecated intersection-observer@0.10.0: The Intersection Observer polyfill is no longer needed and can safely be removed. Intersection Observer has been Baseline since 2019.
+2026-08-01T14:51:33.106759Z	npm warn deprecated recharts@2.15.4: 1.x and 2.x branches are no longer active. Bump to Recharts v3 to receive latest features and bugfixes. See https://github.com/recharts/recharts/wiki/3.0-migration-guide
+2026-08-01T14:51:40.898048Z	
+2026-08-01T14:51:40.898348Z	added 450 packages, and audited 451 packages in 15s
+2026-08-01T14:51:40.89846Z	
+2026-08-01T14:51:40.898524Z	133 packages are looking for funding
+2026-08-01T14:51:40.898586Z	  run `npm fund` for details
+2026-08-01T14:51:40.980516Z	
+2026-08-01T14:51:40.98101Z	8 vulnerabilities (4 moderate, 4 high)
+2026-08-01T14:51:40.98117Z	
+2026-08-01T14:51:40.981318Z	To address all issues (including breaking changes), run:
+2026-08-01T14:51:40.981438Z	  npm audit fix --force
+2026-08-01T14:51:40.981602Z	
+2026-08-01T14:51:40.981732Z	Run `npm audit` for details.
+2026-08-01T14:51:41.051056Z	Executing user command: npm run pages:build
+2026-08-01T14:51:41.330444Z	
+2026-08-01T14:51:41.331279Z	> nextjs_tailwind_shadcn_ts@0.2.0 pages:build
+2026-08-01T14:51:41.331383Z	> npx @opennextjs/cloudflare build && node scripts/prepare-cf-pages.js
+2026-08-01T14:51:41.331433Z	
+2026-08-01T14:51:42.446126Z	npm warn exec The following package was not found and will be installed: @opennextjs/cloudflare@1.20.2
+2026-08-01T14:51:53.924189Z	npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+2026-08-01T14:51:54.905821Z	npm warn deprecated glob@9.3.5: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-08-01T14:52:04.514464Z	
+2026-08-01T14:52:04.514794Z	┌─────────────────────────────┐
+2026-08-01T14:52:04.514948Z	│ OpenNext — Cloudflare build │
+2026-08-01T14:52:04.515016Z	└─────────────────────────────┘
+2026-08-01T14:52:04.515074Z	
+2026-08-01T14:52:04.622787Z	App directory: /opt/buildhome/repo
+2026-08-01T14:52:04.623108Z	Next.js version : 16.2.12
+2026-08-01T14:52:04.624031Z	@opennextjs/cloudflare version: 1.20.2
+2026-08-01T14:52:04.624173Z	@opennextjs/aws version: 4.1.0
+2026-08-01T14:52:04.625021Z	WARN workerd compatibility_date: 2025-01-01, consider updating your wrangler config to a more recent date to benefit from the latest features and fixes.
+2026-08-01T14:52:04.626343Z	
+2026-08-01T14:52:04.626457Z	┌─────────────────────────────────┐
+2026-08-01T14:52:04.626535Z	│ OpenNext — Building Next.js app │
+2026-08-01T14:52:04.626608Z	└─────────────────────────────────┘
+2026-08-01T14:52:04.626671Z	
+2026-08-01T14:52:06.722524Z	$ next build
+2026-08-01T14:52:07.177717Z	⚠ No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
+2026-08-01T14:52:07.182342Z	Attention: Next.js now collects completely anonymous telemetry regarding usage.
+2026-08-01T14:52:07.182478Z	This information is used to shape Next.js' roadmap and prioritize features.
+2026-08-01T14:52:07.182536Z	You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+2026-08-01T14:52:07.182577Z	https://nextjs.org/telemetry
+2026-08-01T14:52:07.182612Z	
+2026-08-01T14:52:07.201705Z	▲ Next.js 16.2.12 (Turbopack)
+2026-08-01T14:52:07.201967Z	- Environments: .env
+2026-08-01T14:52:07.20203Z	
+2026-08-01T14:52:07.282335Z	  Creating an optimized production build ...
+2026-08-01T14:52:13.029938Z	
+2026-08-01T14:52:13.030307Z	> Build error occurred
+2026-08-01T14:52:13.03263Z	Error: Turbopack build failed with 1 errors:
+2026-08-01T14:52:13.033106Z	./src/app/globals.css
+2026-08-01T14:52:13.033195Z	Error evaluating Node.js code
+2026-08-01T14:52:13.033268Z	Error: Cannot find module '@tailwindcss/postcss'
+2026-08-01T14:52:13.033332Z	Require stack:
+2026-08-01T14:52:13.033415Z	- /opt/buildhome/repo/.next/build/chunks/[root-of-the-server]__0oj80bi._.js
+2026-08-01T14:52:13.033493Z	- /opt/buildhome/repo/.next/build/chunks/[turbopack]_runtime.js
+2026-08-01T14:52:13.033552Z	- /opt/buildhome/repo/.next/build/56416d4ae4ce586f.js
+2026-08-01T14:52:13.033601Z	    [at Function._resolveFilename (node:internal/modules/cjs/loader:1401:15)]
+2026-08-01T14:52:13.033651Z	    [at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)]
+2026-08-01T14:52:13.033705Z	    [at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)]
+2026-08-01T14:52:13.033773Z	    [at Function._load (node:internal/modules/cjs/loader:1211:37)]
+2026-08-01T14:52:13.033825Z	    [at TracingChannel.traceSync (node:diagnostics_channel:322:14)]
+2026-08-01T14:52:13.033879Z	    [at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)]
+2026-08-01T14:52:13.033967Z	    [at Module.require (node:internal/modules/cjs/loader:1487:12)]
+2026-08-01T14:52:13.034025Z	    [at require (node:internal/modules/helpers:135:16)]
+2026-08-01T14:52:13.034077Z	    at require (turbopack:///[turbopack-node]/transforms/postcss.ts:49:25) [/opt/buildhome/repo/.next/build/chunks/[root-of-the-server]__0oj80bi._.js:134:33]
+2026-08-01T14:52:13.034132Z	    [at <anonymous>]
+2026-08-01T14:52:13.034178Z	
+2026-08-01T14:52:13.034223Z	Import trace:
+2026-08-01T14:52:13.034277Z	  Client Component Browser:
+2026-08-01T14:52:13.034341Z	    ./src/app/globals.css [Client Component Browser]
+2026-08-01T14:52:13.034388Z	    ./src/app/layout.tsx [Server Component]
+2026-08-01T14:52:13.034435Z	
+2026-08-01T14:52:13.03448Z	
+2026-08-01T14:52:13.034526Z	    at require (turbopack:///[turbopack-node]/transforms/postcss.ts:49:25) [/opt/buildhome/repo/.next/build/chunks/[root-of-the-server]__0oj80bi._.js:134:33])
+2026-08-01T14:52:13.14553Z	error: script "build" exited with code 1
+2026-08-01T14:52:13.14859Z	node:internal/errors:983
+2026-08-01T14:52:13.148831Z	  const err = new Error(message);
+2026-08-01T14:52:13.148963Z	              ^
+2026-08-01T14:52:13.149018Z	
+2026-08-01T14:52:13.149075Z	Error: Command failed: bun run build
+2026-08-01T14:52:13.149131Z	    at genericNodeError (node:internal/errors:983:15)
+2026-08-01T14:52:13.149176Z	    at wrappedFn (node:internal/errors:537:14)
+2026-08-01T14:52:13.149224Z	    at checkExecSyncError (node:child_process:882:11)
+2026-08-01T14:52:13.14927Z	    at Object.execSync (node:child_process:954:15)
+2026-08-01T14:52:13.149317Z	    at buildNextjsApp (file:///opt/buildhome/.npm/_npx/72a7346bab235e2f/node_modules/@opennextjs/aws/dist/build/buildNextApp.js:15:8)
+2026-08-01T14:52:13.149375Z	    at build (file:///opt/buildhome/.npm/_npx/72a7346bab235e2f/node_modules/@opennextjs/cloudflare/dist/cli/build/build.js:63:9)
+2026-08-01T14:52:13.149434Z	    at async buildCommand (file:///opt/buildhome/.npm/_npx/72a7346bab235e2f/node_modules/@opennextjs/cloudflare/dist/cli/commands/build.js:40:5) {
+2026-08-01T14:52:13.149499Z	  status: 1,
+2026-08-01T14:52:13.149553Z	  signal: null,
+2026-08-01T14:52:13.149602Z	  output: [ null, null, null ],
+2026-08-01T14:52:13.14965Z	  pid: 1160,
+2026-08-01T14:52:13.149718Z	  stdout: null,
+2026-08-01T14:52:13.149783Z	  stderr: null
+2026-08-01T14:52:13.149834Z	}
+2026-08-01T14:52:13.149878Z	
+2026-08-01T14:52:13.149923Z	Node.js v22.16.0
+2026-08-01T14:52:13.24493Z	Failed: Error while executing user command. Exited with error code: 1
+2026-08-01T14:52:13.250971Z	Failed: build command exited with code: 1
+2026-08-01T14:52:13.886591Z	Failed: error occurred while running build command
