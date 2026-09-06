@@ -8,6 +8,7 @@ import {
   Send,
   Activity,
   Settings,
+  BarChart3,
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useNexusStore, type AdminTab } from '@/lib/store';
@@ -17,12 +18,14 @@ import ApprovalQueue from './ApprovalQueue';
 import PublishingPanel from './PublishingPanel';
 import ActivityFeed from './ActivityFeed';
 import SettingsPanel from './SettingsPanel';
+import StatsPanel from './StatsPanel';
 
 const TAB_CONFIG: { value: AdminTab; label: string; icon: React.ReactNode }[] = [
   { value: 'agents', label: 'Agenti AI', icon: <Bot className="h-4 w-4" /> },
   { value: 'approval', label: 'Coda Approvazione', icon: <ClipboardCheck className="h-4 w-4" /> },
   { value: 'publishing', label: 'Pubblicazione', icon: <Send className="h-4 w-4" /> },
   { value: 'activity', label: 'Attività', icon: <Activity className="h-4 w-4" /> },
+  { value: 'stats', label: 'Statistiche', icon: <BarChart3 className="h-4 w-4" /> },
   { value: 'settings', label: 'Impostazioni', icon: <Settings className="h-4 w-4" /> },
 ];
 
@@ -106,6 +109,9 @@ export default function AdminPanel() {
         </TabsContent>
         <TabsContent value="activity" className="mt-4">
           <ActivityFeed />
+        </TabsContent>
+        <TabsContent value="stats" className="mt-4">
+          <StatsPanel />
         </TabsContent>
         <TabsContent value="settings" className="mt-4">
           <SettingsPanel />

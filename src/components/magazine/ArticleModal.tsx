@@ -127,6 +127,16 @@ export default function ArticleModal() {
             ))}
           </motion.div>
 
+          {/* Full page CTA */}
+          <Separator className="my-4" />
+          <a
+            href={`/articolo/${selectedArticle.id}`}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline underline-offset-4"
+          >
+            Leggi la pagina completa con condivisione e articoli correlati
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
+
           {/* Source */}
           {selectedArticle.sourceUrl && (
             <>

@@ -292,6 +292,14 @@ export async function collectNews(agentId: string) {
 
   if (!agent) throw new Error('Agent not found');
 
+  // Run lock: prevent double-click / parallel runs of the same agent
+  if (agent.last_run) {
+    const elapsed = Date.now() - new Date(agent.last_run).getTime();
+    if (elapsed < 90_000) {
+      throw new Error('LOCK: questo agente è già in esecuzione o ha appena finito. Riprova tra meno di un minuto.');
+    }
+  }
+
   // Get settings
   const { data: settingsRaw } = await supabase
     .from('settings')
@@ -336,7 +344,7 @@ export async function collectNews(agentId: string) {
     });
   }
 
-  const createdArticles = [];
+  const createdArticles: Array<Record<string, unknown>> = [];
   for (const article of result.articles) {
     const articleId = generateId();
     const initialStatus = isFullyAutonomous ? 'approved' : 'pending_approval';

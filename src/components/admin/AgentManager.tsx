@@ -2,11 +2,12 @@
 
 import { motion } from 'framer-motion';
 import { RefreshCw, Pause, Play, Loader2, Clock, FileText } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNexusStore } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
-import { collectNews, updateAgent } from '@/lib/api';
+import { updateAgent } from '@/lib/api';
 import type { Agent } from '@/lib/store';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; dotColor: string }> = {
@@ -37,14 +38,61 @@ function AgentCard({ agent, index }: AgentCardProps) {
   const { toast } = useToast();
   const isLoading = loadingCollect === agent.id;
   const statusConfig = STATUS_CONFIG[agent.status] || STATUS_CONFIG.paused;
+  const [elapsed, setElapsed] = useState(0);
+  const [phase, setPhase] = useState('');
+
+  // Elapsed timer + live phase from activity logs while collecting
+  useEffect(() => {
+    if (!isLoading) { setElapsed(0); setPhase(''); return; }
+    const t0 = Date.now();
+    const timer = setInterval(() => setElapsed(Math.floor((Date.now() - t0) / 1000)), 1000);
+    const poll = setInterval(async () => {
+      try {
+        const res = await fetch('/api/activity?limit=3');
+        if (res.ok) {
+          const logs = await res.json();
+          const list = Array.isArray(logs) ? logs : logs.logs || [];
+          const mine = list.find((l: { agent_id?: string }) => l.agent_id === agent.id);
+          if (mine?.detail) setPhase(mine.detail);
+        }
+      } catch { /* ignore poll errors */ }
+    }, 4000);
+    return () => { clearInterval(timer); clearInterval(poll); };
+  }, [isLoading, agent.id]);
 
   const handleCollect = async () => {
     setLoadingCollect(agent.id);
     try {
-      await collectNews(agent.id);
-      toast({ title: 'Raccolta avviata', description: `${agent.name} sta raccogliendo notizie...`, variant: 'default' });
-    } catch {
-      toast({ title: 'Errore', description: 'Impossibile avviare la raccolta', variant: 'destructive' });
+      const res = await fetch('/api/collect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentId: agent.id }),
+        signal: AbortSignal.timeout(280_000),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || `Errore ${res.status}`);
+      }
+      const created = data.created ?? 0;
+      const evaluated = data.evaluated ?? 0;
+      toast({
+        title: created > 0 ? `${created} articoli generati` : 'Raccolta completata',
+        description: created > 0
+          ? `${agent.name}: ${evaluated} notizie valutate, ${created} articoli pronti${data.mode === 'semi_autonomous' ? ' (in coda approvazione)' : ''}`
+          : `${agent.name}: nessuna notizia abbastanza rilevante oggi. Riprova più tardi.`,
+        variant: created > 0 ? 'default' : 'default',
+      });
+      // refresh agent last_run locally
+      setAgents(useNexusStore.getState().agents.map((a) =>
+        a.id === agent.id ? { ...a, lastRun: new Date().toISOString() } : a
+      ));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Impossibile avviare la raccolta';
+      toast({
+        title: 'Errore',
+        description: msg.startsWith('LOCK:') ? msg.replace('LOCK: ', '') : msg.slice(0, 140),
+        variant: 'destructive',
+      });
     } finally {
       setLoadingCollect(null);
     }
@@ -111,32 +159,46 @@ function AgentCard({ agent, index }: AgentCardProps) {
       </div>
 
       {/* Actions */}
-      <div className="flex gap-2">
-        <Button
-          size="sm"
-          onClick={handleCollect}
-          disabled={isLoading || agent.status === 'paused'}
-          className="flex-1 gap-1.5"
-        >
-          {isLoading ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <RefreshCw className="h-3.5 w-3.5" />
-          )}
-          Raccogli Notizie
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={handleToggleStatus}
-          className="gap-1.5"
-        >
-          {agent.status === 'active' ? (
-            <Pause className="h-3.5 w-3.5" />
-          ) : (
-            <Play className="h-3.5 w-3.5" />
-          )}
-        </Button>
+      <div className="flex flex-col gap-1.5">
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            onClick={handleCollect}
+            disabled={isLoading || agent.status === 'paused'}
+            className="flex-1 gap-1.5"
+          >
+            {isLoading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <RefreshCw className="h-3.5 w-3.5" />
+            )}
+            {isLoading ? `Lavoro in corso... ${elapsed}s` : 'Raccogli Notizie'}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleToggleStatus}
+            className="gap-1.5"
+          >
+            {agent.status === 'active' ? (
+              <Pause className="h-3.5 w-3.5" />
+            ) : (
+              <Play className="h-3.5 w-3.5" />
+            )}
+          </Button>
+        </div>
+        {isLoading && phase && (
+          <p className="text-[11px] text-muted-foreground truncate" title={phase}>
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse mr-1.5" />
+            {phase}
+          </p>
+        )}
+        {isLoading && !phase && (
+          <p className="text-[11px] text-muted-foreground">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse mr-1.5" />
+            Raccolta notizie reali da fonti RSS + scrittura AI (di solito 40-90s)
+          </p>
+        )}
       </div>
     </motion.div>
   );
@@ -144,6 +206,35 @@ function AgentCard({ agent, index }: AgentCardProps) {
 
 export default function AgentManager() {
   const { agents } = useNexusStore();
+  const { toast } = useToast();
+  const [runningAll, setRunningAll] = useState(false);
+
+  const handleRunAll = async () => {
+    setRunningAll(true);
+    try {
+      const res = await fetch('/api/collect-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+        signal: AbortSignal.timeout(590_000),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Errore ${res.status}`);
+      const created = data.created ?? 0;
+      const ran = data.ran ?? 0;
+      toast({
+        title: created > 0 ? `Redazione completata: ${created} nuovi articoli` : 'Redazione completata',
+        description: created > 0
+          ? `${ran} agenti hanno lavorato. Gli articoli sono in coda d'approvazione.`
+          : `${ran} agenti hanno lavorato, nessuna notizia abbastanza rilevante ora.`,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Esecuzione fallita';
+      toast({ title: 'Errore', description: msg.slice(0, 140), variant: 'destructive' });
+    } finally {
+      setRunningAll(false);
+    }
+  };
 
   if (agents.length === 0) {
     return (
@@ -160,10 +251,27 @@ export default function AgentManager() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {agents.map((agent, index) => (
-        <AgentCard key={agent.id} agent={agent} index={index} />
-      ))}
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-sm text-muted-foreground">
+          {agents.filter((a) => a.status === 'active').length} agenti attivi su {agents.length}
+        </p>
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={handleRunAll}
+          disabled={runningAll}
+          className="gap-1.5"
+        >
+          {runningAll ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+          {runningAll ? 'Redazione al lavoro...' : 'Esegui Tutti gli Agenti'}
+        </Button>
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {agents.map((agent, index) => (
+          <AgentCard key={agent.id} agent={agent} index={index} />
+        ))}
+      </div>
     </div>
   );
 }

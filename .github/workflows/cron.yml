@@ -1,0 +1,36 @@
+# Nexus News AI - redazione automatica
+# Ogni 4 ore fa partire la raccolta notizie per tutti gli agenti attivi.
+#
+# SETUP (una volta sola):
+# 1. GitHub repo -> Settings -> Secrets and variables -> Actions -> New repository secret
+#    Name: CRON_SECRET   Value: (il valore di CRON_SECRET impostato su Cloudflare Pages)
+# 2. Fatto. Lo schedule gira da solo.
+#
+# Alternativa senza GitHub: qualsiasi servizio di cron (es. cron-job.org)
+# puo' chiamare: GET https://nexus-news-ai.pages.dev/api/cron?secret=CRON_SECRET
+
+name: Redazione automatica
+
+on:
+  schedule:
+    - cron: '0 5,9,13,17,21 * * *'  # ogni 4 ore (UTC)
+  workflow_dispatch: {}              # avvio manuale dall'interfaccia GitHub
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Avvia raccolta agenti
+        run: |
+          RESP=$(curl -s -X POST "https://nexus-news-ai.pages.dev/api/cron" \
+            -H "x-cron-secret: ${CRON_SECRET}" \
+            -H "Content-Type: application/json" \
+            --max-time 600 \
+            -w "\nHTTP_STATUS:%{http_code}")
+          echo "$RESP"
+          if ! echo "$RESP" | grep -q "HTTP_STATUS:200"; then
+            echo "::warning::Cron ha risposto con errore (vedi sopra)"
+          fi
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}

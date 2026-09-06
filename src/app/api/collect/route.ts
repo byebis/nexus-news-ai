@@ -15,6 +15,7 @@ export async function POST(request: Request) {
     const message = error instanceof Error
       ? error.message
       : 'Failed to collect news';
-    return Response.json({ error: message }, { status: 500 });
+    const isLock = message.startsWith('LOCK:');
+    return Response.json({ error: message }, { status: isLock ? 429 : 500 });
   }
 }

@@ -31,6 +31,7 @@ IMPORTANTE: Devi restituire SOLO un array JSON valido con questa struttura esatt
   {
     "title": "Titolo della notizia originale",
     "summary": "Riassunto di 2-3 frasi con i fatti principali della notizia",
+    "score": 85,
     "sourceName": "${sourceName}",
     "sourceUrl": "URL della notizia originale"
   }
@@ -40,6 +41,8 @@ Requisiti:
 - Usa SOLO le notizie fornite sopra (non inventare notizie)
 - Riporta i fatti reali con i dettagli presenti negli estratti
 - I title e summary possono essere leggermente riformulati in stile giornalistico
+- "score" = punteggio di rilevanza editoriale da 0 a 100 per la categoria (escludi le notizie banali: seleziona solo punteggi >= 50)
+- Se meno di 2 notizie sono rilevanti, restituisci solo quelle valide
 - NON includere commenti o testo fuori dal JSON`;
 }
 
@@ -257,7 +260,7 @@ export async function processWithAI(
     );
   }
   collected = Array.isArray(parsedCollect) ? (parsedCollect as CollectedArticle[]) : [parsedCollect as CollectedArticle];
-  // Enrich with RSS content (real facts) for the rewrite phase
+  // Enrich with RSS content (real facts) for the rewrite phase + normalize scores
   for (const c of collected) {
     if (!c.content) {
       const match = rss.items.find(r => r.title === c.title || r.link === c.sourceUrl);
@@ -265,63 +268,47 @@ export async function processWithAI(
     }
   }
 
-  // ---- PHASE 2: EVALUATE ----
-  const evaluated: Array<{ article: CollectedArticle; score: number }> = [];
+  // ---- PHASE 2: SCORE (from collect response, no extra LLM call) ----
+  const evaluated = collected
+    .map((article) => {
+      const raw = (article as CollectedArticle & { score?: number }).score;
+      const score = typeof raw === 'number' && !isNaN(raw) ? Math.min(Math.max(Math.round(raw), 0), 100) : 70;
+      return { article, score };
+    })
+    .filter((e) => e.score >= 50);
 
-  for (const article of collected) {
-    const evalResult = await chatWithFallback(
-      [{ role: 'user', content: getEvaluatePrompt(article, category) }],
-      'evaluate',
-      apiKey
-    );
+  // ---- PHASE 3: REWRITE (parallel) ----
+  const rewriteResults = await Promise.all(
+    evaluated.map(async ({ article, score }): Promise<ProcessedArticle> => {
+      const rewriteResult = await chatWithFallback(
+        [{ role: 'user', content: getRewritePrompt(article, category, agentName, agentPersonality) }],
+        'rewrite',
+        apiKey
+      );
 
-    if (evalResult.success && evalResult.response) {
-      modelsUsed.push({ phase: 'evaluate', model: evalResult.response.model });
-      const scoreText = evalResult.response.content.trim();
-      const score = parseInt(scoreText, 10);
-      evaluated.push({
-        article,
-        score: isNaN(score) ? 70 : Math.min(Math.max(score, 0), 100),
-      });
-    } else {
-      errors.push(`Evaluate fallito per "${article.title.slice(0, 40)}": ${evalResult.errors.map(e => e.error).join(', ')}`);
-      evaluated.push({ article, score: 70 });
-    }
-  }
+      const fallbackReadTime = Math.max(2, Math.ceil((article.content || article.summary || 'x').split(/\s+/).length / 200));
 
-  const passing = evaluated.filter(e => e.score >= 50);
-
-  // ---- PHASE 3: REWRITE ----
-  const finalArticles: ProcessedArticle[] = [];
-
-  for (const { article, score } of passing) {
-    const rewriteResult = await chatWithFallback(
-      [{ role: 'user', content: getRewritePrompt(article, category, agentName, agentPersonality) }],
-      'rewrite',
-      apiKey
-    );
-
-    if (rewriteResult.success && rewriteResult.response) {
-      modelsUsed.push({ phase: 'rewrite', model: rewriteResult.response.model });
-      const parsedRewrite = repairParse(rewriteResult.response.content) as Record<string, string> | null;
-      if (parsedRewrite) {
-        const rewritten = parsedRewrite;
-        const readTime = Math.max(2, Math.ceil((rewritten.content || '').split(/\s+/).length / 200));
-        finalArticles.push({
-          title: rewritten.title || article.title,
-          subtitle: rewritten.subtitle || '',
-          content: rewritten.content || article.content || article.summary,
-          summary: rewritten.summary || article.summary,
-          category,
-          sourceName: article.sourceName,
-          sourceUrl: article.sourceUrl,
-          qualityScore: score,
-          readTime,
-          modelUsed: rewriteResult.response.model,
-        });
-      } else {
+      if (rewriteResult.success && rewriteResult.response) {
+        modelsUsed.push({ phase: 'rewrite', model: rewriteResult.response.model });
+        const parsedRewrite = repairParse(rewriteResult.response.content) as Record<string, string> | null;
+        if (parsedRewrite) {
+          const rewritten = parsedRewrite;
+          const readTime = Math.max(2, Math.ceil((rewritten.content || '').split(/\s+/).length / 200));
+          return {
+            title: rewritten.title || article.title,
+            subtitle: rewritten.subtitle || '',
+            content: rewritten.content || article.content || article.summary,
+            summary: rewritten.summary || article.summary,
+            category,
+            sourceName: article.sourceName,
+            sourceUrl: article.sourceUrl,
+            qualityScore: score,
+            readTime,
+            modelUsed: rewriteResult.response.model,
+          };
+        }
         errors.push(`Rewrite parse fallito per "${article.title.slice(0, 40)}"`);
-        finalArticles.push({
+        return {
           title: article.title,
           subtitle: '',
           content: article.content || article.summary,
@@ -330,13 +317,13 @@ export async function processWithAI(
           sourceName: article.sourceName,
           sourceUrl: article.sourceUrl,
           qualityScore: score,
-          readTime: Math.max(2, Math.ceil((article.content || article.summary || 'x').split(/\s+/).length / 200)),
+          readTime: fallbackReadTime,
           modelUsed: rewriteResult.response.model + ' (raw)',
-        });
+        };
       }
-    } else {
+
       errors.push(`Rewrite fallito per "${article.title.slice(0, 40)}"`);
-      finalArticles.push({
+      return {
         title: article.title,
         subtitle: '',
         content: article.content || article.summary,
@@ -345,11 +332,13 @@ export async function processWithAI(
         sourceName: article.sourceName,
         sourceUrl: article.sourceUrl,
         qualityScore: score,
-        readTime: Math.max(2, Math.ceil((article.content || article.summary || 'x').split(/\s+/).length / 200)),
+        readTime: fallbackReadTime,
         modelUsed: 'rewrite-failed',
-      });
-    }
-  }
+      };
+    })
+  );
+
+  const finalArticles: ProcessedArticle[] = rewriteResults;
 
   return {
     success: true,

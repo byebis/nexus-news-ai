@@ -56,6 +56,8 @@ const routesConfig = {
     '/logo.svg',
     '/robots.txt',
     '/sitemap.xml',
+    '/manifest.json',
+    '/icons/*',
     '/apple-icon*',
     '/icon*',
   ],
