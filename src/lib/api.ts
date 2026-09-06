@@ -39,7 +39,7 @@ export interface ArticleRow {
   updated_at: string;
   agent?: { id: string; name: string; avatar: string; category: string };
   publish_logs?: PublishLogRow[];
-  approval_log?: ApprovalLogRow | null;
+  approval_logs?: ApprovalLogRow[] | null;
 }
 
 export interface PublishLogRow {
@@ -110,7 +110,9 @@ function toArticle(row: ArticleRow): import('@/lib/store').Article {
     ...r,
     agent: r.agent || { id: '', name: 'AI Agent', avatar: '', category: '' },
     publishLogs: Array.isArray(r.publishLogs) ? transformRows(r.publishLogs) : [],
-    approvalLog: r.approvalLog ? toCamelCase(r.approvalLog as Record<string, unknown>) as any : null,
+    approvalLog: Array.isArray(r.approvalLogs) && r.approvalLogs.length > 0
+      ? (toCamelCase(r.approvalLogs[0] as Record<string, unknown>) as any)
+      : null,
   };
 }
 
@@ -136,14 +138,14 @@ export async function fetchAgents(): Promise<import('@/lib/store').Agent[]> {
   return data.map(toAgent);
 }
 
-export async function fetchArticles(params: {
+export async function fetchArticles({ category, status, limit }: {
   category?: string;
   status?: string;
   limit?: number;
 }): Promise<import('@/lib/store').Article[]> {
   let query = supabase
     .from('articles')
-    .select('*, agent:agents(id, name, avatar, category), publish_logs(*), approval_log(*)')
+    .select('*, agent:agents(id, name, avatar, category), publish_logs(*), approval_logs(*)')
     .order('created_at', { ascending: false });
 
   if (status && status !== 'all') query = query.eq('status', status);
@@ -159,7 +161,7 @@ export async function fetchArticles(params: {
 export async function fetchArticleById(id: string): Promise<import('@/lib/store').Article | null> {
   const { data, error } = await supabase
     .from('articles')
-    .select('*, agent:agents(id, name, avatar, category), publish_logs(*), approval_log(*)')
+    .select('*, agent:agents(id, name, avatar, category), publish_logs(*), approval_logs(*)')
     .eq('id', id)
     .single();
   if (error) console.error('fetchArticleById error:', error);
@@ -231,7 +233,7 @@ export async function approveArticle(articleId: string, action: string, note?: s
 
   const { data: updated } = await supabase
     .from('articles')
-    .select('*, agent:agents(id, name, avatar, category), publish_logs(*), approval_log(*)')
+    .select('*, agent:agents(id, name, avatar, category), publish_logs(*), approval_logs(*)')
     .eq('id', articleId)
     .single();
 
@@ -272,7 +274,7 @@ export async function publishArticle(articleId: string, platforms: string[]) {
 
   const { data: updated } = await supabase
     .from('articles')
-    .select('*, agent:agents(id, name, avatar, category), publish_logs(*), approval_log(*)')
+    .select('*, agent:agents(id, name, avatar, category), publish_logs(*), approval_logs(*)')
     .eq('id', articleId)
     .single();
 
