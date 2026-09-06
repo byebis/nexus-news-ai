@@ -74,3 +74,33 @@ Work Log:
 Stage Summary:
 - Commit bcd61b1: audit fixes
 - Remaining: execute SQL on Supabase, add auth to API routes, add OPENROUTER_API_KEY to CF
+
+---
+Task ID: css-fix-full-test
+Agent: main (Sasobot)
+Task: Fix CSS mancanti sul sito live + test completo browser come admin + far funzionare tutto
+
+Work Log:
+- Diagnosi CSS 404: HTML SSR ok ma /_next/static/* tutti 404 (anche su deployment-specific URL)
+- ROOT CAUSE: _routes.json ASSENTE nel build output -> CF Pages mandava TUTTE le richieste al worker, che non ha handler per asset statici
+- Fix: scripts/prepare-cf-pages.js ora genera _routes.json con exclude /_next/static/* (CDN diretto)
+- Ripristinato .env (perso nel cleanup: sovrascritto con template DATABASE_URL) e .cf-credentials
+- Test generazione AI: /api/collect falliva -> errori nascosti dal catch generico
+- Scoperto che TUTTI i modelli free nel chain OpenRouter erano stati RITIRATI (HTTP 404)
+- Model chain aggiornato con modelli free attuali (gemma-4-31b, minimax-m2.7, nemotron-3-super, gemma-4-26b, openrouter/free)
+- I modelli rifiutavano di "trovare notizie reali" (nessun web access) -> creata pipeline RSS REALE
+- Nuovo src/lib/rss.ts: fetch feed ANSA (tecnologia/politica/economia/sport/cultura/top) + MEDIA INAF (scienza), parse regex CDATA, timeout 10s, fallback feed top
+- Pipeline: RSS -> LLM seleziona 2 -> evaluate -> rewrite articolo completo (400+ parole)
+- repairParse potenziato: think blocks, control chars nelle stringhe, JSON troncato, trailing commas
+- Timeout OpenRouter 15s -> 45s
+- Fix bug approvazione: action 'approve' non matchava 'approved' -> articoli approvati diventavano 'rejected'
+- Errori reali propagati alle response API (prima "Failed to collect news" generico)
+- 12+ deploy via wrangler, test browser completi con agent-browser (home, modale, filtri, admin, 5 tab, tema scuro)
+
+Stage Summary:
+- SITO COMPLETAMENTE FUNZIONANTE: https://nexus-news-ai.pages.dev
+- CSS/JS/font 200, homepage con articoli REALI
+- Pipeline AI end-to-end verificato 2 volte: TechBot->ANSA Tecnologia (1 articolo), SciExplorer->MEDIA INAF (2 articoli)
+- Approva->Pubblica verificato: articolo reale in homepage come hero
+- Commit 9c04e8f pushato su GitHub
+- 2 nuovi articoli scienza in coda approvazione (Anton puo approvarli dall'admin)
