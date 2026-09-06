@@ -104,3 +104,31 @@ Stage Summary:
 - Approva->Pubblica verificato: articolo reale in homepage come hero
 - Commit 9c04e8f pushato su GitHub
 - 2 nuovi articoli scienza in coda approvazione (Anton puo approvarli dall'admin)
+
+---
+Task ID: premium-upgrade
+Agent: main (Sasobot)
+Task: Fix raccolta da UI + portare Nexus News AI a livello premium
+
+Work Log:
+- ROOT CAUSE errore "Impossibile avviare la raccolta": AgentManager chiamava collectNews (funzione server) DIRETTAMENTE nel browser, dove OPENROUTER_API_KEY non esiste -> errore istantaneo
+- Fix: bottone ora fa POST /api/collect con timeout 280s e mostra errori reali della response
+- Pipeline 2x piu veloce: score incluso nella select (niente evaluate separate), riscritture Promise.all (74s per 2 articoli, prima 120s per 1)
+- Lock anti-doppio-run: agents.last_run < 90s -> 429 LOCK
+- Progress live: timer elapsed + polling /api/activity per la fase corrente nel bottone
+- Bottone "Esegui Tutti gli Agenti" -> POST /api/collect-all
+- Nuova pagina /articolo/[id]: SSR, generateMetadata SEO+OG, cover art SVG procedurale, share buttons, drop cap, fonte, correlati; CTA dalla modale
+- Nuovo src/lib/categories.ts (emoji/gradients/badge per categoria)
+- Tab Statistiche: /api/stats + StatsPanel (KPI cards, BarChart 14gg, PieChart categorie, classifica agenti con recharts)
+- /api/health: check Supabase/OpenRouter/RSS con tempi risposta
+- /api/cron e /api/collect-all protetti da CRON_SECRET (settato su CF: zDoBEAOrFZEv2y8lFBQeKbxyVypun1o9)
+- .github/workflows/cron.yml: redazione automatica ogni 4 ore via GitHub Actions (richiede secret CRON_SECRET nel repo)
+- PWA: manifest.json + 5 icone PIL generate, metadata completa in layout (OG, twitter, apple)
+- Magazine: ricerca testuale, sort recente/qualita, ticker ultim'ora CSS-only
+- _routes.json: aggiunti /manifest.json e /icons/* agli exclude CDN
+- Test browser: bottone raccolta OK dal browser (bug Anton risolto), MarketPulse->2 articoli economia reali (Pil Italia 82, Opec+ 88), statistiche renderizzate, pagina articolo perfetta
+
+Stage Summary:
+- Commit 3c48357 pushato (30 file, +1224 righe)
+- Sito livello premium: raccolta REALE funzionante da UI, dashboard statistiche, pagine articolo, PWA, automazione cron
+- Per attivare cron automatico: aggiungi secret CRON_SECRET nel repo GitHub (Settings->Secrets->Actions)
