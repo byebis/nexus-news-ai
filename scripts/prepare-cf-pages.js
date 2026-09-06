@@ -44,6 +44,25 @@ export default {
 };
 `;
 
+// 3. Generate _routes.json: static assets served directly by CF Pages CDN
+// (bypassing worker) - WITHOUT this, CSS/JS requests hit the Next server handler and 404
+const routesConfig = {
+  version: 1,
+  include: ['/*'],
+  exclude: [
+    '/_next/static/*',
+    '/favicon.ico',
+    '/favicon.svg',
+    '/logo.svg',
+    '/robots.txt',
+    '/sitemap.xml',
+    '/apple-icon*',
+    '/icon*',
+  ],
+};
+fs.writeFileSync(path.join(outputDir, '_routes.json'), JSON.stringify(routesConfig, null, 2));
+console.log('[prepare] Generated _routes.json (static assets bypass worker)');
+
 fs.writeFileSync(path.join(outputDir, '_worker.js'), workerContent);
 console.log('[prepare] Generated clean _worker.js (no Durable Objects)');
 console.log('[prepare] Done! Output ready at .open-next/');

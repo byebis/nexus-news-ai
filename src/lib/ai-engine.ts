@@ -1,43 +1,75 @@
-// AI Engine - Real AI news pipeline via OpenRouter (NO mocks)
+// AI Engine - Real AI news pipeline: RSS real sources + OpenRouter rewriting (NO mocks)
 
 import { chatWithFallback, extractJSON, type Phase } from './openrouter';
+import { fetchRssItems, type RssItem } from './rss';
 
 // ============================================
 // PROMPTS
 // ============================================
 
-function getCollectPrompt(category: string, agentPersonality: string): string {
+function getCollectPrompt(
+  category: string,
+  agentPersonality: string,
+  rssItems: RssItem[],
+  sourceName: string
+): string {
+  const list = rssItems
+    .map((it, i) => `${i + 1}. Titolo: ${it.title}\n   Estratto: ${it.description.slice(0, 220)}\n   Link: ${it.link}`)
+    .join('\n');
+
   return `Sei un assistente editoriale specializzato in notizie di categoria "${category}".
-Il tuo compito è trovare 2-3 notizie vere e recenti (ultimi 7 giorni) in questa categoria.
+Ti fornisco le notizie REALI di oggi raccolte dall'agente da ${sourceName}:
+
+${list}
+
+Personalità del giornalista: ${agentPersonality}
+
+Il tuo compito: scegli le 2 notizie PIÙ INTERESSANTI e RILEVANTI per la categoria "${category}" e restituiscile come candidati per articoli.
+
+IMPORTANTE: Devi restituire SOLO un array JSON valido con questa struttura esatta:
+[
+  {
+    "title": "Titolo della notizia originale",
+    "summary": "Riassunto di 2-3 frasi con i fatti principali della notizia",
+    "sourceName": "${sourceName}",
+    "sourceUrl": "URL della notizia originale"
+  }
+]
+
+Requisiti:
+- Usa SOLO le notizie fornite sopra (non inventare notizie)
+- Riporta i fatti reali con i dettagli presenti negli estratti
+- I title e summary possono essere leggermente riformulati in stile giornalistico
+- NON includere commenti o testo fuori dal JSON`;
+}
+
+// Evergreen fallback: RSS unreachable -> editorial analysis (no false real-time claims)
+function getEvergreenPrompt(category: string, agentPersonality: string): string {
+  return `Sei un assistente editoriale specializzato in ${category}.
+Il tuo compito è proporre 1 analisi editoriale ORIGINALE su un tema di grande attualità e interesse per "${category}" (un approfondimento di sfondo, non una notizia di ultim'ora).
 
 Personalità del giornalista: ${agentPersonality}
 
 IMPORTANTE: Devi restituire SOLO un array JSON valido con questa struttura esatta:
 [
   {
-    "title": "Titolo della notizia",
-    "summary": "Riassunto di 1-2 frasi",
-    "content": "Testo completo dell'articolo di almeno 300 parole, con dettagli, contesto e implicazioni",
-    "sourceName": "Nome della fonte",
-    "sourceUrl": "URL della fonte originale"
+    "title": "Titolo dell'analisi",
+    "summary": "Riassunto di 2-3 frasi",
+    "sourceName": "Nexus News AI - Analisi editoriale",
+    "sourceUrl": "https://nexus-news-ai.pages.dev"
   }
 ]
 
-Requisiti:
-- Le notizie devono essere REALI e attuali
-- Il contenuto deve essere dettagliato (minimo 300 parole per articolo)
-- Includi dati specifici, nomi, cifre dove possibile
-- Varia le fonti e le prospettive
-- NON includere commenti o testo fuori dal JSON`;
+NON includere commenti o testo fuori dal JSON`;
 }
 
-function getEvaluatePrompt(article: { title: string; summary: string; content: string }, category: string): string {
+function getEvaluatePrompt(article: { title: string; summary: string; content?: string }, category: string): string {
   return `Sei un editor capo di una redazione giornalistica specializzata in ${category}.
 Valuta questo articolo su una scala da 0 a 100.
 
 Titolo: ${article.title}
 Riassunto: ${article.summary}
-Contenuto: ${article.content.slice(0, 1500)}
+Contenuto: ${(article.content || article.summary || '').slice(0, 1500)}
 
 Criteri di valutazione:
 - Rilevanza per la categoria (30%)
@@ -50,7 +82,7 @@ Restituisci SOLO un numero intero da 0 a 100, nient'altro.`;
 }
 
 function getRewritePrompt(
-  article: { title: string; summary: string; content: string },
+  article: { title: string; summary: string; content?: string },
   category: string,
   agentName: string,
   agentPersonality: string
@@ -69,20 +101,80 @@ function getRewritePrompt(
   return `Sei ${agentName}, un giornalista AI con personalità: "${agentPersonality}".
 Il tuo stile editoriale è ${style}.
 
-Riscrivi il seguente articolo per la rivista Nexus News AI, mantenendo tutti i fatti ma adattando il tono e lo stile.
+Scrivi un articolo ORIGINALE per la rivista Nexus News AI basato su questa notizia reale, riportandone i fatti e arricchendolo con contesto, analisi e implicazioni.
 
-Titolo originale: ${article.title}
-Contenuto originale: ${article.content}
+Notizia di partenza:
+- Titolo: ${article.title}
+- Fatti principali: ${article.summary}
+- Estratto: ${(article.content || '').slice(0, 800)}
 
 Restituisci SOLO un JSON con questa struttura esatta:
 {
   "title": "Nuovo titolo creativo e accattivante",
   "subtitle": "Sottotitolo di 1 frase che cattura l'essenza",
-  "content": "Articolo riscritto completo, minimo 400 parole, con intro editoriale, corpo dettagliato e conclusione",
+  "content": "Articolo completo, minimo 400 parole, con intro editoriale, corpo dettagliato e conclusione",
   "summary": "Riassunto di 2-3 frasi"
 }
 
 NON includere markdown, commenti o testo fuori dal JSON.`;
+}
+
+// ============================================
+// JSON REPAIR (models often return broken/truncated JSON)
+// ============================================
+
+function repairParse(text: string): unknown | null {
+  const jsonStr = extractJSON(text);
+
+  // 1. Direct parse
+  try { return JSON.parse(jsonStr); } catch { /* continue */ }
+
+  let s = jsonStr;
+
+  // 2. Remove trailing commas
+  const noTrailing = s.replace(/,\s*([\]}])/g, '$1');
+  try { return JSON.parse(noTrailing); } catch { /* continue */ }
+
+  // 3. Escape raw control characters (newlines/tabs) inside JSON strings
+  let out = '';
+  let inStr = false;
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (inStr) {
+      if (ch === '\\') { out += ch + (s[i + 1] ?? ''); i++; continue; }
+      if (ch === '"') { inStr = false; out += ch; continue; }
+      if (ch === '\n') { out += '\\n'; continue; }
+      if (ch === '\r') { continue; }
+      if (ch === '\t') { out += '\\t'; continue; }
+      out += ch;
+    } else {
+      if (ch === '"') inStr = true;
+      out += ch;
+    }
+  }
+  try { return JSON.parse(out); } catch { /* continue */ }
+
+  // 3b. Same but also strip trailing commas after escaping
+  try { return JSON.parse(out.replace(/,\s*([\]}])/g, '$1')); } catch { /* continue */ }
+
+  // 4. Truncated array: keep only complete objects, close the array
+  if (s.trim().startsWith('[')) {
+    const lastObj = s.lastIndexOf('}');
+    if (lastObj > 0) {
+      const candidate = s.slice(0, lastObj + 1) + ']';
+      try { return JSON.parse(candidate); } catch { /* continue */ }
+      try { return JSON.parse(candidate.replace(/,\s*([\]}])/g, '$1')); } catch { /* continue */ }
+    }
+  }
+
+  // 5. Truncated single object
+  const firstObj = s.indexOf('{');
+  const lastObj = s.lastIndexOf('}');
+  if (firstObj !== -1 && lastObj > firstObj) {
+    try { return JSON.parse(s.slice(firstObj, lastObj + 1)); } catch { /* continue */ }
+  }
+
+  return null;
 }
 
 // ============================================
@@ -92,7 +184,7 @@ NON includere markdown, commenti o testo fuori dal JSON.`;
 interface CollectedArticle {
   title: string;
   summary: string;
-  content: string;
+  content?: string;
   sourceName: string;
   sourceUrl: string;
 }
@@ -129,9 +221,19 @@ export async function processWithAI(
   const errors: string[] = [];
   const modelsUsed: { phase: Phase; model: string }[] = [];
 
-  // ---- PHASE 1: COLLECT ----
+  // ---- PHASE 0: RSS COLLECTION (real news from real sources) ----
+  const rss = await fetchRssItems(category);
+  if (rss.items.length === 0) {
+    errors.push(`RSS non disponibili: ${rss.errors.join('; ')}`);
+  }
+
+  // ---- PHASE 1: COLLECT (select the best candidates) ----
+  const collectPrompt = rss.items.length > 0
+    ? getCollectPrompt(category, agentPersonality, rss.items, rss.sourceName)
+    : getEvergreenPrompt(category, agentPersonality);
+
   const collectResult = await chatWithFallback(
-    [{ role: 'user', content: getCollectPrompt(category, agentPersonality) }],
+    [{ role: 'user', content: collectPrompt }],
     'collect',
     apiKey
   );
@@ -146,12 +248,21 @@ export async function processWithAI(
   modelsUsed.push({ phase: 'collect', model: collectResult.response.model });
 
   let collected: CollectedArticle[];
-  try {
-    const jsonStr = extractJSON(collectResult.response.content);
-    collected = JSON.parse(jsonStr);
-    if (!Array.isArray(collected)) collected = [collected];
-  } catch {
-    throw new Error('Impossibile parsare la risposta Collect dal modello ' + collectResult.response.model);
+  const parsedCollect = repairParse(collectResult.response.content);
+  if (parsedCollect === null) {
+    const snippet = collectResult.response.content.replace(/\s+/g, ' ').slice(0, 220);
+    throw new Error(
+      'Impossibile parsare la risposta Collect dal modello ' + collectResult.response.model +
+      '. Risposta: "' + snippet + '..."'
+    );
+  }
+  collected = Array.isArray(parsedCollect) ? (parsedCollect as CollectedArticle[]) : [parsedCollect as CollectedArticle];
+  // Enrich with RSS content (real facts) for the rewrite phase
+  for (const c of collected) {
+    if (!c.content) {
+      const match = rss.items.find(r => r.title === c.title || r.link === c.sourceUrl);
+      c.content = match ? match.description : '';
+    }
   }
 
   // ---- PHASE 2: EVALUATE ----
@@ -192,14 +303,14 @@ export async function processWithAI(
 
     if (rewriteResult.success && rewriteResult.response) {
       modelsUsed.push({ phase: 'rewrite', model: rewriteResult.response.model });
-      try {
-        const jsonStr = extractJSON(rewriteResult.response.content);
-        const rewritten = JSON.parse(jsonStr);
+      const parsedRewrite = repairParse(rewriteResult.response.content) as Record<string, string> | null;
+      if (parsedRewrite) {
+        const rewritten = parsedRewrite;
         const readTime = Math.max(2, Math.ceil((rewritten.content || '').split(/\s+/).length / 200));
         finalArticles.push({
           title: rewritten.title || article.title,
           subtitle: rewritten.subtitle || '',
-          content: rewritten.content || article.content,
+          content: rewritten.content || article.content || article.summary,
           summary: rewritten.summary || article.summary,
           category,
           sourceName: article.sourceName,
@@ -208,18 +319,18 @@ export async function processWithAI(
           readTime,
           modelUsed: rewriteResult.response.model,
         });
-      } catch {
+      } else {
         errors.push(`Rewrite parse fallito per "${article.title.slice(0, 40)}"`);
         finalArticles.push({
           title: article.title,
           subtitle: '',
-          content: article.content,
+          content: article.content || article.summary,
           summary: article.summary,
           category,
           sourceName: article.sourceName,
           sourceUrl: article.sourceUrl,
           qualityScore: score,
-          readTime: Math.max(2, Math.ceil(article.content.split(/\s+/).length / 200)),
+          readTime: Math.max(2, Math.ceil((article.content || article.summary || 'x').split(/\s+/).length / 200)),
           modelUsed: rewriteResult.response.model + ' (raw)',
         });
       }
@@ -228,13 +339,13 @@ export async function processWithAI(
       finalArticles.push({
         title: article.title,
         subtitle: '',
-        content: article.content,
+        content: article.content || article.summary,
         summary: article.summary,
         category,
         sourceName: article.sourceName,
         sourceUrl: article.sourceUrl,
         qualityScore: score,
-        readTime: Math.max(2, Math.ceil(article.content.split(/\s+/).length / 200)),
+        readTime: Math.max(2, Math.ceil((article.content || article.summary || 'x').split(/\s+/).length / 200)),
         modelUsed: 'rewrite-failed',
       });
     }

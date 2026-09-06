@@ -4,11 +4,13 @@
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // Free models - same chain for all phases, fallback order
+// Updated Sep 2026: previous free models (llama-4-scout, gemma-3-27b, nemotron-70b,
+// deepseek-v3-0324) were REMOVED from OpenRouter free tier (HTTP 404)
 export const MODELS = [
-  'meta-llama/llama-4-scout:free',
-  'google/gemma-3-27b-it:free',
-  'nvidia/llama-3.1-nemotron-70b-instruct:free',
-  'deepseek/deepseek-chat-v3-0324:free',
+  'google/gemma-4-31b-it:free',
+  'minimax/minimax-m2.7:free',
+  'nvidia/nemotron-3-super-120b-a12b:free',
+  'google/gemma-4-26b-a4b-it:free',
   'openrouter/free',
 ] as const;
 
@@ -43,7 +45,7 @@ async function callOpenRouter(
   model: string,
   messages: ChatMessage[],
   apiKey: string,
-  timeoutMs = 15000
+  timeoutMs = 45000
 ): Promise<{ content: string; tokensUsed: number }> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -141,20 +143,22 @@ export async function testApiKey(apiKey: string): Promise<{ valid: boolean; mode
 
 // Extract JSON from a response that may contain markdown code blocks
 export function extractJSON(text: string): string {
+  // Strip reasoning-model think blocks (e.g. <think>...</think>) and common prose prefixes
+  let cleaned = text.replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/<\/?think>/gi, '');
   // Try to extract from ```json ... ``` block
-  const jsonBlock = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  const jsonBlock = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (jsonBlock?.[1]) return jsonBlock[1].trim();
   // Try array first (collect phase returns arrays)
-  const firstBracket = text.indexOf('[');
-  const lastBracket = text.lastIndexOf(']');
+  const firstBracket = cleaned.indexOf('[');
+  const lastBracket = cleaned.lastIndexOf(']');
   if (firstBracket !== -1 && lastBracket > firstBracket) {
-    return text.slice(firstBracket, lastBracket + 1);
+    return cleaned.slice(firstBracket, lastBracket + 1);
   }
   // Try to find first { ... } block
-  const firstBrace = text.indexOf('{');
-  const lastBrace = text.lastIndexOf('}');
+  const firstBrace = cleaned.indexOf('{');
+  const lastBrace = cleaned.lastIndexOf('}');
   if (firstBrace !== -1 && lastBrace > firstBrace) {
-    return text.slice(firstBrace, lastBrace + 1);
+    return cleaned.slice(firstBrace, lastBrace + 1);
   }
-  return text.trim();
+  return cleaned.trim();
 }

@@ -225,7 +225,7 @@ export async function approveArticle(articleId: string, action: string, note?: s
       });
   }
 
-  const newStatus = action === 'approved' ? 'approved' : 'rejected';
+  const newStatus = (action === 'approve' || action === 'approved') ? 'approved' : 'rejected';
   await supabase
     .from('articles')
     .update({ status: newStatus })
