@@ -7,6 +7,7 @@ export interface RssItem {
   link: string;
   pubDate: string;
   source: string;
+  image: string;
 }
 
 interface RssSource {
@@ -42,6 +43,59 @@ function decodeCdata(s: string): string {
     .trim();
 }
 
+/**
+ * Extract the first plausible photo URL from a raw RSS <item> block.
+ * Priority: media:content > media:thumbnail > enclosure > inline <img>.
+ * Only https URLs of real photos (no icons/videos); WordPress thumbnail
+ * variants (-150x150.jpg) are upgraded to the full-size original.
+ */
+const IMG_EXT = /\.(jpe?g|png|webp)(\?|$)/i;
+
+function normalizeImageUrl(raw: string): string {
+  let url = raw.trim().replace(/&amp;/g, '&');
+  if (url.startsWith('//')) url = 'https:' + url;
+  if (!url.startsWith('https://')) return '';
+  // Upgrade WordPress size variants to the original file
+  url = url.replace(/-\d{2,4}x\d{2,4}(\.jpe?g|\.png|\.webp)(\?|$)/i, '$1');
+  return url;
+}
+
+function plausiblePhoto(url: string): boolean {
+  if (!url) return false;
+  if (/\.(svg|ico|gif)(\?|$)/i.test(url)) return false;
+  // Site icons / logos / placeholders (e.g. ANSA precomposed banner icons)
+  if (/(logo|icon|avatar|sprite|placeholder|precomposed|favicon|\/ico\/|\/img\/ico\/)/i.test(url)) return false;
+  return IMG_EXT.test(url) || /image|photo|media|uploads|webimages/i.test(url);
+}
+
+function extractImageFromBlock(block: string): string {
+  const candidates: string[] = [];
+  // media:content / media:thumbnail (url attribute)
+  const mediaRe = /<media:(?:content|thumbnail)[^>]*?url="([^"]+)"[^>]*>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = mediaRe.exec(block))) {
+    const tag = m[0];
+    const type = tag.match(/type="([^"]+)"/i)?.[1] || '';
+    if (!type || /^image\//i.test(type)) candidates.push(m[1]);
+  }
+  // enclosure (image/* only)
+  const encRe = /<enclosure[^>]*?url="([^"]+)"[^>]*>/gi;
+  while ((m = encRe.exec(block))) {
+    const tag = m[0];
+    const type = tag.match(/type="([^"]+)"/i)?.[1] || '';
+    if (/^image\//i.test(type)) candidates.push(m[1]);
+  }
+  // inline <img> (typically inside content:encoded CDATA)
+  const imgRe = /<img[^>]*?src="([^"]+)"/gi;
+  while ((m = imgRe.exec(block))) candidates.push(m[1]);
+
+  for (const c of candidates) {
+    const url = normalizeImageUrl(c);
+    if (url && plausiblePhoto(url)) return url;
+  }
+  return '';
+}
+
 function parseRss(xml: string, sourceName: string): RssItem[] {
   const items: RssItem[] = [];
   // RSS 2.0 <item> blocks
@@ -51,7 +105,8 @@ function parseRss(xml: string, sourceName: string): RssItem[] {
     const description = decodeCdata(block.match(/<description>([\s\S]*?)<\/description>/)?.[1] || '');
     const link = decodeCdata(block.match(/<link>([\s\S]*?)<\/link>/)?.[1] || '');
     const pubDate = decodeCdata(block.match(/<pubDate>([\s\S]*?)<\/pubDate>/)?.[1] || '');
-    if (title) items.push({ title, description, link, pubDate, source: sourceName });
+    const image = extractImageFromBlock(block);
+    if (title) items.push({ title, description, link, pubDate, source: sourceName, image });
   }
   // Atom <entry> fallback
   if (items.length === 0) {
@@ -61,7 +116,8 @@ function parseRss(xml: string, sourceName: string): RssItem[] {
       const description = decodeCdata(entry.match(/<summary[^>]*>([\s\S]*?)<\/summary>/)?.[1] || '');
       const link = entry.match(/<link[^>]*href="([^"]+)"/)?.[1] || '';
       const pubDate = decodeCdata(entry.match(/<updated[^>]*>([\s\S]*?)<\/updated>/)?.[1] || '');
-      if (title) items.push({ title, description, link, pubDate, source: sourceName });
+      const image = extractImageFromBlock(entry);
+      if (title) items.push({ title, description, link, pubDate, source: sourceName, image });
     }
   }
   return items;

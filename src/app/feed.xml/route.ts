@@ -28,7 +28,9 @@ export async function GET() {
       <guid isPermaLink="true">${url}</guid>
       <description>${description}</description>
       <dc:creator>${author}</dc:creator>
-      <category>${escapeXml(a.category)}</category>
+      <category>${escapeXml(a.category)}</category>${
+        a.imageUrl ? `\n      <enclosure url="${escapeXml(a.imageUrl)}" type="image/jpeg" />` : ''
+      }
       <pubDate>${pubDate}</pubDate>
     </item>`;
       })

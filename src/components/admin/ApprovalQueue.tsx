@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, X, Loader2, ShieldCheck, ExternalLink, User, Pencil, Save } from 'lucide-react';
+import { Check, X, Loader2, ShieldCheck, ExternalLink, User, Pencil, Save, ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -269,9 +269,57 @@ function ApprovalCard({ article }: { article: Article }) {
 export default function ApprovalQueue() {
   const { pendingArticles, settings } = useNexusStore();
   const isAutonomous = settings?.mode === 'fully_autonomous';
+  const [backfilling, setBackfilling] = useState(false);
+  const [backfillMsg, setBackfillMsg] = useState('');
+
+  const runBackfill = async () => {
+    setBackfilling(true);
+    setBackfillMsg('');
+    try {
+      const res = await fetch('/api/images/backfill', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ limit: 8 }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Errore');
+      setBackfillMsg(
+        data.updated > 0
+          ? `Immagini trovate per ${data.updated} articoli su ${data.processed}.`
+          : 'Nessuna immagine da completare.'
+      );
+      // refresh published list so new covers show up immediately
+      const { fetchArticles } = await import('@/lib/api');
+      const articles = await fetchArticles({ status: 'published', limit: 100 });
+      useNexusStore.getState().setArticles(articles);
+    } catch (e) {
+      setBackfillMsg(e instanceof Error ? e.message : 'Errore durante il completamento immagini');
+    } finally {
+      setBackfilling(false);
+      setTimeout(() => setBackfillMsg(''), 6000);
+    }
+  };
 
   return (
     <div className="space-y-4">
+      {/* Backfill cover images (admin editorial tool) */}
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-muted/30 p-3">
+        <p className="text-xs text-muted-foreground">
+          Trova una foto per gli articoli pubblicati che non ne hanno ancora una
+          (originale della fonte, archivio CC o illustrazione AI).
+        </p>
+        <Button size="sm" variant="outline" className="gap-1.5 shrink-0" onClick={runBackfill} disabled={backfilling}>
+          {backfilling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImageIcon className="h-3.5 w-3.5" />}
+          {backfilling ? 'Cerco immagini...' : 'Completa immagini mancanti'}
+        </Button>
+      </div>
+      {backfillMsg && (
+        <Alert>
+          <ImageIcon className="h-4 w-4" />
+          <AlertDescription>{backfillMsg}</AlertDescription>
+        </Alert>
+      )}
+
       {isAutonomous && (
         <Alert className="border-emerald-200 bg-emerald-50 dark:border-emerald-900/40 dark:bg-emerald-950/30">
           <ShieldCheck className="h-4 w-4 text-emerald-600" />

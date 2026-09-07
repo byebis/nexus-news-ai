@@ -5,7 +5,7 @@ import { Clock, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useNexusStore } from '@/lib/store';
 import BookmarkButton from '@/components/magazine/BookmarkButton';
-import { ArticleCover } from '@/components/magazine/ArticleCover';
+import { ArticleImage } from '@/components/magazine/ArticleImage';
 import { useT, useLang, useCategoryName, pickTitle, pickSummary } from '@/lib/i18n';
 import type { Article } from '@/lib/store';
 
@@ -57,12 +57,16 @@ export default function ArticleCard({ article, index = 0 }: ArticleCardProps) {
       className="group cursor-pointer overflow-hidden rounded-xl border bg-card shadow-sm transition-shadow hover:shadow-lg"
       onClick={() => setSelectedArticle(article)}
     >
-      {/* Generative cover art */}
+      {/* Cover: real photo when available, generative art fallback */}
       <div className="relative h-40 sm:h-48 overflow-hidden">
-        <ArticleCover
+        <ArticleImage
+          imageUrl={article.imageUrl}
+          imageCredit={article.imageCredit}
+          imageCreditUrl={article.imageCreditUrl}
           category={article.category}
           seed={article.id}
-          className="absolute inset-0 h-full w-full transition-transform duration-500 group-hover:scale-105"
+          alt={pickTitle(lang, article)}
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <div className="pointer-events-none absolute inset-0 bg-black/5 transition-colors group-hover:bg-black/0" />
         {/* Category badge on image */}

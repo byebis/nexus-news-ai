@@ -2,6 +2,7 @@
 
 import { chatWithFallback, extractJSON, type Phase } from './openrouter';
 import { fetchRssItems, type RssItem } from './rss';
+import { resolveArticleImage } from './article-image';
 
 // ============================================
 // PROMPTS
@@ -190,6 +191,7 @@ interface CollectedArticle {
   content?: string;
   sourceName: string;
   sourceUrl: string;
+  imageUrl?: string;
 }
 
 export interface ProcessedArticle {
@@ -200,6 +202,9 @@ export interface ProcessedArticle {
   category: string;
   sourceName: string;
   sourceUrl: string;
+  imageUrl: string;
+  imageCredit: string;
+  imageCreditUrl: string;
   qualityScore: number;
   readTime: number;
   modelUsed: string;
@@ -266,6 +271,10 @@ export async function processWithAI(
       const match = rss.items.find(r => r.title === c.title || r.link === c.sourceUrl);
       c.content = match ? match.description : '';
     }
+    if (!c.imageUrl) {
+      const match = rss.items.find(r => r.title === c.title || r.link === c.sourceUrl);
+      c.imageUrl = match?.image || '';
+    }
   }
 
   // ---- PHASE 2: SCORE (from collect response, no extra LLM call) ----
@@ -302,6 +311,9 @@ export async function processWithAI(
             category,
             sourceName: article.sourceName,
             sourceUrl: article.sourceUrl,
+            imageUrl: '',
+            imageCredit: '',
+            imageCreditUrl: '',
             qualityScore: score,
             readTime,
             modelUsed: rewriteResult.response.model,
@@ -316,6 +328,9 @@ export async function processWithAI(
           category,
           sourceName: article.sourceName,
           sourceUrl: article.sourceUrl,
+          imageUrl: '',
+          imageCredit: '',
+          imageCreditUrl: '',
           qualityScore: score,
           readTime: fallbackReadTime,
           modelUsed: rewriteResult.response.model + ' (raw)',
@@ -331,6 +346,9 @@ export async function processWithAI(
         category,
         sourceName: article.sourceName,
         sourceUrl: article.sourceUrl,
+        imageUrl: '',
+        imageCredit: '',
+        imageCreditUrl: '',
         qualityScore: score,
         readTime: fallbackReadTime,
         modelUsed: 'rewrite-failed',
@@ -339,6 +357,30 @@ export async function processWithAI(
   );
 
   const finalArticles: ProcessedArticle[] = rewriteResults;
+
+  // ---- PHASE 4: IMAGE RESOLUTION (parallel) ----
+  // Original photo from RSS/page, else CC archive search, else AI illustration.
+  await Promise.all(
+    finalArticles.map(async (art) => {
+      try {
+        const img = await resolveArticleImage({
+          title: art.title,
+          summary: art.summary || art.content.slice(0, 200),
+          category: art.category,
+          sourceName: art.sourceName,
+          rssImage: collected.find(c => c.title === art.title || c.sourceUrl === art.sourceUrl)?.imageUrl,
+          pageUrl: art.sourceUrl,
+        });
+        if (img) {
+          art.imageUrl = img.url;
+          art.imageCredit = img.credit;
+          art.imageCreditUrl = img.creditUrl;
+        }
+      } catch {
+        // leave empty: the UI falls back to generative cover art
+      }
+    })
+  );
 
   return {
     success: true,

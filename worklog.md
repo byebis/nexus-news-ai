@@ -214,3 +214,24 @@ Stage Summary:
 - Sito live: https://nexus-news-ai.pages.dev con login redazione, ruoli admin/editor, gestione utenti, canali social configurabili (telegram+webhook REALI), pubblicazione selettiva multi-canale
 - Credenziali prova: admin@nexusnews.ai / Admin2026! · editor@nexusnews.ai / Editor2026!
 - Nota: per X/LinkedIn/Instagram/Facebook serve un relay webhook (Make/Zapier/n8n) — campo relay_webhook nelle impostazioni canale
+
+---
+Task ID: levelup-5
+Agent: main (Sasobot)
+Task: Level-Up 5 — cover art generative, edizione inglese (i18n + traduzione articoli), digest settimanali redazione
+
+Work Log:
+- MIGRATION scripts/migrate-levelup5.py: articoli + colonne title_en/subtitle_en/summary_en/content_en/translated_at; tabella weekly_digests (id, agent_id, week_start, title, content, article_count, sent_channels, UNIQUE(agent_id,week_start), RLS allow-all)
+- COVER ART ENGINE 2.0 (ArticleCover.tsx riscritto): PRNG deterministico cyrb128+mulberry32, 7 palette categoria x3 varianti, 8 famiglie pattern (waves, rings, constellation, dots, stripes, peaks, orbits, cells), gradienti 3-stop direzione random, glow radiali, vignettatura, grana feTurbulence, emoji categoria. Applicata a card, hero (sfondo articolo in evidenza) e pagina articolo
+- I18N (src/lib/i18n.tsx): LanguageProvider IT/EN con persistenza localStorage (nexus-lang), useT/useT con variabili {n}/{cat}/{agent}, T inline, LDate localizzata, pickTitle/pickSummary/pickSubtitle, useCategoryName. Toggle IT/EN in header desktop+mobile
+- Componenti tradotti: Header, Footer, Hero, CategoryBar, ArticleGrid, ArticleCard (label qualità), NewsTicker (BREAKING), TrendingSection, NewArticlesBanner, ArticleModal (+badge EN), ReaderShell (TTS multilingua: voce it-IT/en-US), ShareButtons (toast), BookmarkButton, AiDebate. Admin panel resta in italiano
+- TRADUZIONE ARTICOLI: POST/GET /api/translate/[id] → LLM traduce title/subtitle/summary/content EN, cache permanente su DB; ArticleTranslation.tsx (TranslatableHeadline + ArticleBodyClient con store zustand condiviso), auto-traduzione se si apre direttamente in EN, bottone "Read in English"/"Leggi in italiano", TTS segue la lingua
+- DIGEST SETTIMANALI: GET /api/digests pubblico (digest settimana + conteggi), POST admin+editor (singolo o tutti sequenziali), POST /api/digests/telegram (thread multi-messaggio via Bot API). Prompt robusto formato lineare TITLE:/POST: (fallback JSON repairParse). Tab admin "Digest" (DigestPanel) + sezione pubblica homepage (WeeklyDigestSection) con thread numerati e bottoni staff
+- FIX durante i test: auto-trigger traduzione all'apertura in EN; ID digest univoco (agentId condivide prefisso → uso segmento finale UUID); strip think-blocks prima del parse TITLE/POST
+- Deploy: e94157a5 → b3cf117c → 409d9862 → c6d19edb (fix digest), commit 05307d1 pushato
+- Test E2E live: cover art uniche per 6+ card verificata visivamente; toggle EN → UI inglese completa (AI Active, BREAKING, categorie, date en-GB, Read more); articolo aperto in EN → traduzione auto (titolo+sottotitolo+contenuto EN con badge "English version generated with AI"), cache verificata su DB (translated_at); digest generati per CultureHub e SportArena via API (thread 4 post), sezione homepage renderizzata; Telegram senza config → errore chiaro; editor: GET digests 200, users bloccato; console senza errori
+
+Stage Summary:
+- Sito live https://nexus-news-ai.pages.dev con: copertine d'autore uniche per articolo, edizione inglese completa (UI + articoli tradotti on-demand con cache), digest settimanali della redazione (LLM + Telegram + homepage + tab admin)
+- Commit 05307d1 su GitHub; deploy CF c6d19edb
+- Note: admin panel resta IT (tool interno); traduzione genera ~1 chiamata LLM per articolo (poi cache)

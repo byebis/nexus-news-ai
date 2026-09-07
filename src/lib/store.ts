@@ -89,6 +89,8 @@ export interface Article {
   sourceName: string;
   sourceUrl: string;
   imageUrl: string;
+  imageCredit: string | null;
+  imageCreditUrl: string | null;
   status: string;
   qualityScore: number;
   readTime: number;
@@ -175,6 +177,9 @@ interface NexusStore {
   selectedArticle: Article | null;
   setSelectedArticle: (article: Article | null) => void;
 
+  searchOpen: boolean;
+  setSearchOpen: (open: boolean) => void;
+
   // Data
   agents: Agent[];
   articles: Article[];
@@ -219,6 +224,9 @@ export const useNexusStore = create<NexusStore>((set) => ({
 
   selectedArticle: null,
   setSelectedArticle: (article) => set({ selectedArticle: article }),
+
+  searchOpen: false,
+  setSearchOpen: (open) => set({ searchOpen: open }),
 
   agents: [],
   articles: [],

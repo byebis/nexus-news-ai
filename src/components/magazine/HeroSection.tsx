@@ -6,7 +6,7 @@ import { Clock, ArrowRight, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNexusStore } from '@/lib/store';
-import { ArticleCover } from '@/components/magazine/ArticleCover';
+import { ArticleImage } from '@/components/magazine/ArticleImage';
 import { useT, useLang, useCategoryName, LDate, pickTitle, pickSubtitle } from '@/lib/i18n';
 import type { Article } from '@/lib/store';
 
@@ -64,11 +64,17 @@ export default function HeroSection() {
       className="group relative overflow-hidden rounded-2xl cursor-pointer"
       onClick={() => setSelectedArticle(featured)}
     >
-      {/* Generative cover art of the featured article */}
-      <ArticleCover
+      {/* Cover photo of the featured article (fallback: generative art) */}
+      <ArticleImage
+        imageUrl={featured.imageUrl}
+        imageCredit={featured.imageCredit}
+        imageCreditUrl={featured.imageCreditUrl}
         category={featured.category}
         seed={featured.id}
-        className="absolute inset-0 h-full w-full"
+        alt={pickTitle(lang, featured)}
+        eager
+        showCredit
+        className="absolute inset-0 h-full w-full object-cover"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/10" />
 

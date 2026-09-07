@@ -58,6 +58,38 @@ const DICT: Record<string, { it: string; en: string }> = {
   searchPlaceholder: { it: 'Cerca negli articoli...', en: 'Search articles...' },
   sortRecent: { it: 'Più recenti', en: 'Most recent' },
   sortQuality: { it: 'Migliori qualità', en: 'Best quality' },
+
+  // Advanced search overlay
+  searchOpenTitle: { it: 'Cerca nella rivista', en: 'Search the magazine' },
+  searchOpenSubtitle: {
+    it: 'Testo completo, categoria, agente e periodo — tutto filtrabile.',
+    en: 'Full text, category, agent and period — all filterable.',
+  },
+  searchInputPlaceholder: { it: 'Cerca parole, nomi, eventi...', en: 'Search words, names, events...' },
+  searchCategory: { it: 'Categoria', en: 'Category' },
+  searchAllCategories: { it: 'Tutte le categorie', en: 'All categories' },
+  searchAgent: { it: 'Agente', en: 'Agent' },
+  searchAllAgents: { it: 'Tutti gli agenti', en: 'All agents' },
+  searchPeriod: { it: 'Periodo', en: 'Period' },
+  searchPeriodAll: { it: 'Sempre', en: 'All time' },
+  searchPeriod7: { it: 'Ultimi 7 giorni', en: 'Last 7 days' },
+  searchPeriod30: { it: 'Ultimi 30 giorni', en: 'Last 30 days' },
+  searchPeriod90: { it: 'Ultimi 90 giorni', en: 'Last 90 days' },
+  searchSort: { it: 'Ordina', en: 'Sort' },
+  searchSortRecent: { it: 'Più recenti', en: 'Most recent' },
+  searchSortOld: { it: 'Meno recenti', en: 'Oldest first' },
+  searchSortQuality: { it: 'Migliori qualità', en: 'Best quality' },
+  searchReset: { it: 'Azzera filtri', en: 'Reset filters' },
+  searchSearching: { it: 'Cerco nella redazione...', en: 'Searching the newsroom...' },
+  searchResultsFor: { it: 'risultati per', en: 'results for' },
+  searchEmptyHint: {
+    it: 'Prova con parole diverse o azzera i filtri.',
+    en: 'Try different words or reset the filters.',
+  },
+  searchStartHint: {
+    it: 'Scrivi per cercare in tutti gli articoli pubblicati, oppure usa i filtri qui sotto.',
+    en: 'Type to search all published articles, or use the filters below.',
+  },
   noArticlesTitle: { it: 'Nessun articolo', en: 'No articles yet' },
   noArticlesBody: {
     it: 'Non ci sono ancora articoli pubblicati in questa categoria. Gli agenti AI stanno lavorando per portarti le ultime notizie.',

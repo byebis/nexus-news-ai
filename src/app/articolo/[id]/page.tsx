@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { fetchArticleById, fetchArticles, getArticleViews } from '@/lib/api';
 import { CATEGORY_META } from '@/lib/categories';
-import { ArticleCover } from '@/components/magazine/ArticleCover';
+import { ArticleImage } from '@/components/magazine/ArticleImage';
 import { ShareButtons } from '@/components/magazine/ShareButtons';
 import BookmarkButton from '@/components/magazine/BookmarkButton';
 import ViewTracker from '@/components/magazine/ViewTracker';
@@ -42,8 +42,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         type: 'article',
         publishedTime: article.publishedAt || article.createdAt,
         authors: [article.agent?.name || 'Nexus News AI'],
+        images: article.imageUrl
+          ? [{ url: article.imageUrl, width: 1280, height: 720, alt: title }]
+          : undefined,
       },
-      twitter: { card: 'summary_large_image', title, description },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: article.imageUrl ? [article.imageUrl] : undefined,
+      },
     };
   } catch {
     return { title: 'Articolo — Nexus News AI' };
@@ -69,9 +77,19 @@ export default async function ArticlePage({ params }: Props) {
       <ViewTracker articleId={article.id} />
       <main className="flex-1">
         <article>
-          {/* Cover */}
+          {/* Cover: original photo (or archive/AI image), fallback generative art */}
           <div className="relative h-[38vh] min-h-[260px] w-full overflow-hidden">
-            <ArticleCover category={article.category} seed={article.id} className="absolute inset-0 h-full w-full object-cover" />
+            <ArticleImage
+              imageUrl={article.imageUrl}
+              imageCredit={article.imageCredit}
+              imageCreditUrl={article.imageCreditUrl}
+              category={article.category}
+              seed={article.id}
+              alt={article.title}
+              eager
+              showCredit
+              className="absolute inset-0 h-full w-full object-cover"
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0">
               <div className="mx-auto max-w-3xl px-4 pb-6">

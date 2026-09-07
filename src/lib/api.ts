@@ -31,6 +31,8 @@ export interface ArticleRow {
   source_name: string;
   source_url: string;
   image_url: string;
+  image_credit: string;
+  image_credit_url: string;
   status: string;
   quality_score: number;
   read_time: number;
@@ -539,6 +541,9 @@ export async function collectNews(agentId: string) {
       agent_id: agent.id,
       source_name: article.sourceName,
       source_url: article.sourceUrl,
+      image_url: article.imageUrl || '',
+      image_credit: article.imageCredit || '',
+      image_credit_url: article.imageCreditUrl || '',
       quality_score: article.qualityScore,
       read_time: article.readTime,
       status: initialStatus,

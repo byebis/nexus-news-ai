@@ -3,14 +3,15 @@
 import { useState } from 'react';
 import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Sun, Moon, Menu, X, Zap, Languages } from 'lucide-react';
+import { Shield, Sun, Moon, Menu, X, Zap, Languages, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNexusStore } from '@/lib/store';
 import { useT, useLang } from '@/lib/i18n';
+import SearchOverlay from '@/components/magazine/SearchOverlay';
 
 export default function Header() {
   const { theme, setTheme } = useTheme();
-  const { viewMode, setViewMode, settings } = useNexusStore();
+  const { viewMode, setViewMode, settings, searchOpen, setSearchOpen } = useNexusStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const t = useT();
   const { lang, setLang } = useLang();
@@ -72,6 +73,15 @@ export default function Header() {
           </motion.div>
 
           <LangToggle />
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSearchOpen(true)}
+            aria-label={t('searchOpenTitle')}
+          >
+            <Search className="h-4 w-4" />
+          </Button>
 
           <Button
             variant={viewMode === 'admin' ? 'default' : 'ghost'}
@@ -147,6 +157,17 @@ export default function Header() {
               </div>
               <LangToggle full />
               <Button
+                variant="outline"
+                className="w-full justify-start gap-2"
+                onClick={() => {
+                  setSearchOpen(true);
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <Search className="h-4 w-4" />
+                {t('searchOpenTitle')}
+              </Button>
+              <Button
                 variant={viewMode === 'admin' ? 'default' : 'outline'}
                 className="w-full justify-start gap-2"
                 onClick={() => {
@@ -172,6 +193,9 @@ export default function Header() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Advanced search overlay (mounted here so it's available on every page) */}
+      <SearchOverlay />
     </header>
   );
 }
