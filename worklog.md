@@ -235,3 +235,29 @@ Stage Summary:
 - Sito live https://nexus-news-ai.pages.dev con: copertine d'autore uniche per articolo, edizione inglese completa (UI + articoli tradotti on-demand con cache), digest settimanali della redazione (LLM + Telegram + homepage + tab admin)
 - Commit 05307d1 su GitHub; deploy CF c6d19edb
 - Note: admin panel resta IT (tool interno); traduzione genera ~1 chiamata LLM per articolo (poi cache)
+
+---
+Task ID: levelup-6
+Agent: main (Sasobot)
+Task: Level-Up 6 — foto originali articoli (catena completa), ricerca avanzata, correlati, og:image social, tab admin Immagini
+
+Work Log:
+- SCOPERTA sessione precedente già implementata (commit 85df786, mai deployato/reportato): resolver article-image.ts (RSS photo -> og:image pagina -> Openverse -> Wikimedia -> illustrazione AI Pollinations deterministica), ArticleImage.tsx (foto reale + fallback cover art + credit chip), /api/search full-text, SearchOverlay (filtri categoria/agente/periodo/ordine), /api/images/backfill, foto su card/hero/pagina
+- FIX logo bug: 9/14 articoli avevano il LOGO ANSA (ansa-700x366-precomposed.png, che ANSA pubblica come og:image generico!) come foto -> looksLikeLogo filter in resolver + plausiblePhoto in rss.ts + script scripts/cleanup-logo-images.py (reset 9 righe DB)
+- BACKFILL eseguito da locale su DB produzione: 9/9 risolte con illustrazioni AI (le pagine ANSA non hanno foto nel HTML, lazy-JS; og:image loro = logo) -> copertura 14/14 = 100%
+- Migliorato imageFromPage: fallback prima foto plausibile nel body (data-src/src, filtro webimages|media|uploads|photo|img_) per siti che non hanno og:image
+- NUOVO: GET /api/images/backfill (stats copertura: total/withPhoto/missing/coverage%/next 10) + POST aperto anche a editor
+- NUOVO tab admin "Immagini" (ImagesPanel.tsx, admin+editor): progress bar copertura, bottone "Completa immagini mancanti" (batch 10, risultati con badge origine: originale/archivio/ai), lista prossimi articoli, explainer catena 4 step
+- NUOVO: scorciatoia tastiera "/" apre la ricerca (Header, ignora input/textarea/contentEditable)
+- NUOVO: articoli correlati in ArticleModal ("Altri articoli di {categoria}", 2 card con foto, click sostituisce contenuto modal)
+- Già presente dalla sessione precedente: correlati in pagina articolo, og:image/twitter:card dinamici con foto reale (generateMetadata)
+- ENV DISASTRO: .env ridotto a solo DATABASE_URL e .cf-credentials SPARITI (wipe tra sessioni) -> .env ricostruito (Supabase URL+anon key da wrangler.toml/git history, AUTH_SECRET, CRON_SECRET); TOKEN CLOUDFLARE NON RECUPERABILE (mai in git, correttamente) -> SERVITO NUOVO TOKEN da Anton per deployare
+- Build OK (2x: prima con .env rotto -> griglia vuota in locale, poi con .env riparato -> OK; NEXT_PUBLIC_* vengono inlineate a build time!)
+- Test E2E locale (wrangler pages dev :8799): home con hero AI-illustration + credit chip, card con foto reali ANSA (Venezia) + illustrazioni AI, "/" apre ricerca, search "Venezia" 3 risultati con thumbnail, modal con correlati fotografici, pagina articolo: og:image foto ANSA + twitter summary_large_image + credit link + correlati con foto, login admin OK, tab Immagini: 14/14 100% copertura
+- Screenshot: l6b-home-foto-reali.png, l6b-cards-foto.png, l6b-grid-foto.png, l6b-ricerca.png, l6b-modal-correlati.png, l6b-articolo-correlati.png, l6b-admin-immagini.png
+- Commit fec16a7 pushato su GitHub
+
+Stage Summary:
+- CODICE L6 COMPLETO E TESTATO — atteso solo token CF per deploy
+- DB produzione già aggiornato: 14/14 articoli con foto (visibile SUBITO dopo il deploy perché il DB è condiviso)
+- NOTA per il futuro: i file .env/.cf-credentials vengono cancellati tra le sessioni — tenere una copia dei valori; token CF NON salvare in chat (rotazione)
