@@ -103,11 +103,19 @@ export function ArticleBodyClient({ article }: { article: Article }) {
   const paragraphsEn = en ? (en.content || '').split(/\n+/).filter((p) => p.trim().length > 0) : [];
   const paragraphs = usingEn ? paragraphsEn : paragraphsIt;
 
+  // Summary-first speech, like a podcast intro: title → subtitle → "In sintesi: …" → full body
+  const activeSummary = usingEn ? en!.summary || '' : article.summary || '';
   const plainText = [
     usingEn ? en!.title : article.title,
     usingEn ? (en!.subtitle || '') : (article.subtitle || ''),
+    activeSummary ? `${t('ttsSummaryLead')} ${activeSummary}` : '',
+    t('ttsBodyLead'),
     usingEn ? en!.content : (article.content || article.summary || ''),
-  ].join('. ').replace(/\s+/g, ' ').trim();
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
   const ensureTranslation = useCallback(async () => {
     if (en || loading) return;

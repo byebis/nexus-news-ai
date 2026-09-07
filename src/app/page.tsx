@@ -6,6 +6,7 @@ import { fetchSettings } from '@/lib/api';
 import Header from '@/components/shared/Header';
 import Footer from '@/components/shared/Footer';
 import HeroSection from '@/components/magazine/HeroSection';
+import AudioBriefing from '@/components/magazine/AudioBriefing';
 import CategoryBar from '@/components/magazine/CategoryBar';
 import ArticleGrid from '@/components/magazine/ArticleGrid';
 import NewsTicker from '@/components/magazine/NewsTicker';
@@ -41,6 +42,7 @@ export default function Home() {
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
           <NewsTicker />
           <HeroSection />
+          <AudioBriefing />
           <ContinueReading />
           <TrendingSection />
           <WeeklyDigestSection />

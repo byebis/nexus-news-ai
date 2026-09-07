@@ -3,8 +3,10 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { fetchArticleById, fetchArticles, getArticleViews } from '@/lib/api';
 import { CATEGORY_META } from '@/lib/categories';
+import { bestSummary } from '@/lib/summary';
 import { ArticleImage } from '@/components/magazine/ArticleImage';
 import { ShareButtons } from '@/components/magazine/ShareButtons';
+import SummaryBox from '@/components/magazine/SummaryBox';
 import BookmarkButton from '@/components/magazine/BookmarkButton';
 import ViewTracker from '@/components/magazine/ViewTracker';
 import HistoryTracker from '@/components/magazine/HistoryTracker';
@@ -72,8 +74,31 @@ export default async function ArticlePage({ params }: Props) {
 
   const meta = CATEGORY_META[article.category] || CATEGORY_META.default;
 
+  // "In sintesi": AI summary if present, extractive distillation as fallback
+  const sintesi = bestSummary(article);
+
+  const siteUrl = 'https://nexus-news-ai.pages.dev';
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    headline: article.title,
+    description: sintesi || article.subtitle || article.title,
+    image: article.imageUrl ? [article.imageUrl] : undefined,
+    datePublished: article.publishedAt || article.createdAt,
+    dateModified: article.updatedAt || article.createdAt,
+    articleSection: article.category,
+    author: [{ '@type': 'Person', name: article.agent?.name || 'Nexus News AI' }],
+    publisher: {
+      '@type': 'Organization',
+      name: 'Nexus News AI',
+      logo: { '@type': 'ImageObject', url: `${siteUrl}/logo.svg` },
+    },
+    mainEntityOfPage: `${siteUrl}/articolo/${article.id}`,
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Header />
       <ViewTracker articleId={article.id} />
       <HistoryTracker
@@ -144,6 +169,9 @@ export default async function ArticlePage({ params }: Props) {
                 <ShareButtons title={article.title} />
               </div>
             </div>
+
+            {/* In sintesi — key points box (AI summary or extractive) */}
+            {sintesi && <SummaryBox summary={sintesi} />}
 
             {/* IT/EN switch + article body with reader tools */}
             <ArticleBodyClient article={article} />

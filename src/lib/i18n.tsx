@@ -152,6 +152,32 @@ const DICT: Record<string, { it: string; en: string }> = {
   ttsUnavailable: { it: 'Voce non disponibile', en: 'Voice not available' },
   ttsUnsupported: { it: 'Il browser non supporta la sintesi vocale', en: 'Your browser does not support speech synthesis' },
 
+  // Level 11 — In sintesi + Briefing audio
+  summaryKicker: { it: 'In sintesi', en: 'In short' },
+  ttsSummaryLead: { it: 'In sintesi.', en: 'In short.' },
+  ttsBodyLead: { it: "Ora l'articolo completo.", en: 'Now, the full article.' },
+  briefingKicker: { it: 'Briefing audio', en: 'Audio briefing' },
+  briefingTitle: { it: 'Le notizie in 60 secondi', en: 'The news in 60 seconds' },
+  briefingPlay: { it: 'Ascolta il briefing', en: 'Play briefing' },
+  briefingPause: { it: 'Pausa', en: 'Pause' },
+  briefingResume: { it: 'Riprendi', en: 'Resume' },
+  briefingStop: { it: 'Ferma', en: 'Stop' },
+  briefingSpeed: { it: 'Velocità', en: 'Speed' },
+  briefingPlaying: { it: 'Riproduzione in corso…', en: 'Now playing…' },
+  briefingPaused: { it: 'In pausa', en: 'Paused' },
+  briefingStories: { it: '{n} notizie', en: '{n} stories' },
+  briefingEst: { it: '~{n} min', en: '~{n} min' },
+  briefingUpdated: { it: 'Aggiornato ogni giorno', en: 'Updated daily' },
+  briefingScriptIntro: {
+    it: 'Benvenuti nel briefing di Nexus News AI. Oggi è {date}. Ecco le {n} notizie principali del giorno.',
+    en: 'Welcome to the Nexus News AI briefing. Today is {date}. Here are the top {n} stories of the day.',
+  },
+  briefingScriptItem: { it: 'Punto {n}. {cat}. {title}.', en: 'Story {n}. {cat}. {title}.' },
+  briefingScriptOutro: {
+    it: 'E questo è il briefing di oggi. Trovi tutti i dettagli negli articoli completi su Nexus News AI. Buona giornata.',
+    en: "And that's today's briefing. You'll find all the details in the full articles on Nexus News AI. Have a great day.",
+  },
+
   // Share
   linkCopied: { it: 'Link copiato', en: 'Link copied' },
   linkCopiedBody: { it: 'Il link dell\u2019articolo è negli appunti', en: 'The article link is in your clipboard' },
