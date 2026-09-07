@@ -8,16 +8,16 @@ const MISSING_OR = 'image_url.is.null,image_url.eq.';
 
 /**
  * GET /api/images/backfill (admin+editor)
- * Coverage stats: how many published/approved articles have a real photo,
- * how many are missing, plus the next batch of missing titles.
+ * Coverage stats across ALL articles (pending included: an article about to
+ * be approved must already have its photo), plus the next batch of missing titles.
  */
 export async function GET(request: Request) {
   const guard = await requireRole(request, ['admin', 'editor']);
   if (guard.error) return guard.error;
 
   const [totalRes, withPhotoRes] = await Promise.all([
-    supabase.from('articles').select('id', { count: 'exact', head: true }).in('status', ['published', 'approved']),
-    supabase.from('articles').select('id', { count: 'exact', head: true }).in('status', ['published', 'approved']).not('image_url', 'is', null).neq('image_url', ''),
+    supabase.from('articles').select('id', { count: 'exact', head: true }),
+    supabase.from('articles').select('id', { count: 'exact', head: true }).not('image_url', 'is', null).neq('image_url', ''),
   ]);
 
   const total = totalRes.count ?? 0;
@@ -27,7 +27,6 @@ export async function GET(request: Request) {
     .from('articles')
     .select('id, title, category, source_name')
     .or(MISSING_OR)
-    .in('status', ['published', 'approved'])
     .order('created_at', { ascending: false })
     .limit(10);
 
@@ -47,8 +46,9 @@ export async function GET(request: Request) {
 
 /**
  * POST /api/images/backfill  (admin+editor)
- * Finds published/approved articles without a cover image and resolves one
- * via the full chain (RSS photo -> original page og:image -> Openverse -> Wikimedia -> AI).
+ * Finds articles without a cover image (pending_approval first: they need a
+ * photo before approval) and resolves one via the full chain
+ * (RSS photo -> original page og:image -> Openverse -> Wikimedia -> AI).
  * Body: { limit?: number }  — default 8 per call.
  */
 export async function POST(request: Request) {
@@ -63,9 +63,9 @@ export async function POST(request: Request) {
 
   const { data: missing, error } = await supabase
     .from('articles')
-    .select('id, title, summary, category, source_name, source_url')
+    .select('id, title, summary, category, source_name, source_url, status')
     .or(MISSING_OR)
-    .in('status', ['published', 'approved'])
+    .in('status', ['pending_approval', 'approved', 'published'])
     .order('created_at', { ascending: false })
     .limit(limit);
 
