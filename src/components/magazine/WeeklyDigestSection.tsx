@@ -140,7 +140,7 @@ export default function WeeklyDigestSection() {
       {digests.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t('digestEmptyStaff')}</p>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid min-w-0 gap-4 md:grid-cols-2">
           {digests.map((d, i) => {
             const posts = (d.content || '').split(/\n\n+/).filter(Boolean);
             return (
@@ -149,7 +149,7 @@ export default function WeeklyDigestSection() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: i * 0.06 }}
-                className="flex flex-col rounded-xl border bg-card p-4 shadow-sm"
+                className="flex min-w-0 flex-col overflow-hidden rounded-xl border bg-card p-4 shadow-sm"
               >
                 <div className="mb-3 flex items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border bg-background text-lg">
@@ -173,7 +173,7 @@ export default function WeeklyDigestSection() {
                       <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
                         {j + 1}
                       </span>
-                      <p className="text-xs leading-relaxed text-foreground/85">{p}</p>
+                      <p className="break-words text-xs leading-relaxed text-foreground/85">{p}</p>
                     </div>
                   ))}
                 </div>
@@ -199,8 +199,8 @@ export default function WeeklyDigestSection() {
 
       {isStaff && agentsReady.length > 0 && (
         <div className="mt-4 flex flex-wrap items-center gap-2 border-t pt-4">
-          <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Users className="h-3.5 w-3.5" />
+          <span className="flex min-w-0 flex-wrap items-center gap-1.5 break-words text-xs text-muted-foreground">
+            <Users className="h-3.5 w-3.5 shrink-0" />
             {agentsReady.map((a) => `${a.avatar} ${a.name} (${a.weekCount})`).join(' · ')}
           </span>
           <div className="ml-auto flex flex-wrap gap-2">

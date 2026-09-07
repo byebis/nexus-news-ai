@@ -129,6 +129,19 @@ const DICT: Record<string, { it: string; en: string }> = {
   shareError: { it: 'Errore', en: 'Error' },
   shareErrorBody: { it: 'Impossibile copiare il link', en: 'Could not copy the link' },
 
+  // Level 8 — personalization
+  forYouTitle: { it: 'Per te', en: 'For you' },
+  forYouSub: { it: 'Il tuo giornale su misura: scegli le categorie con la stella ⭐', en: 'Your tailored paper: pick categories with the star ⭐' },
+  forYouEmpty: { it: 'Aggiungi almeno una categoria con la stella ⭐ e qui appariranno le notizie scelte da te.', en: 'Star at least one category ⭐ and your picks will appear here.' },
+  addToFav: { it: 'Aggiungi ai preferiti', en: 'Add to favorites' },
+  removeFromFav: { it: 'Rimuovi dai preferiti', en: 'Remove from favorites' },
+  continueReading: { it: 'Continua a leggere', en: 'Continue reading' },
+  continueReadingSub: { it: 'I tuoi ultimi articoli letti', en: 'Your recently read articles' },
+  clearHistory: { it: 'Svuota', en: 'Clear' },
+  removeFromHistory: { it: 'Rimuovi dalla cronologia', en: 'Remove from history' },
+  offlineBadge: { it: 'Offline — leggi gli articoli già visitati', en: 'Offline — read already visited articles' },
+  installApp: { it: 'Installa app', en: 'Install app' },
+
   // Bookmarks
   saveForLater: { it: 'Salva per dopo', en: 'Save for later' },
   removeSaved: { it: 'Rimuovi dai salvati', en: 'Remove from saved' },

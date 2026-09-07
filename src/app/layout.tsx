@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "next-themes";
 import { LanguageProvider } from "@/lib/i18n";
+import SWRegister from "@/components/shared/SWRegister";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,6 +24,11 @@ export const metadata: Metadata = {
   },
   description: "Rivista di news guidata da agenti AI specializzati. Notizie di tecnologia, politica, economia, scienza, sport, cultura e salute.",
   manifest: "/manifest.json",
+  alternates: {
+    types: {
+      "application/rss+xml": "/feed.xml",
+    },
+  },
   applicationName: "Nexus News AI",
   appleWebApp: { capable: true, title: "Nexus News", statusBarStyle: "black-translucent" },
   icons: {
@@ -59,6 +65,7 @@ export default function RootLayout({
         >
           <LanguageProvider>
             {children}
+            <SWRegister />
             <Toaster />
           </LanguageProvider>
         </ThemeProvider>

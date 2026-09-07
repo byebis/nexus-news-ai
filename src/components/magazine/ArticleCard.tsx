@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Clock, User } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { useNexusStore } from '@/lib/store';
 import BookmarkButton from '@/components/magazine/BookmarkButton';
@@ -37,7 +38,7 @@ interface ArticleCardProps {
 }
 
 export default function ArticleCard({ article, index = 0 }: ArticleCardProps) {
-  const { setSelectedArticle } = useNexusStore();
+  const router = useRouter();
   const t = useT();
   const { lang } = useLang();
   const categoryName = useCategoryName();
@@ -55,7 +56,7 @@ export default function ArticleCard({ article, index = 0 }: ArticleCardProps) {
       transition={{ duration: 0.3, delay: index * 0.05 }}
       whileHover={{ y: -4 }}
       className="group cursor-pointer overflow-hidden rounded-xl border bg-card shadow-sm transition-shadow hover:shadow-lg"
-      onClick={() => setSelectedArticle(article)}
+      onClick={() => router.push(`/articolo/${article.id}`)}
     >
       {/* Cover: real photo when available, generative art fallback */}
       <div className="relative h-40 sm:h-48 overflow-hidden">

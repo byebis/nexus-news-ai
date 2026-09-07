@@ -7,6 +7,7 @@ import { ArticleImage } from '@/components/magazine/ArticleImage';
 import { ShareButtons } from '@/components/magazine/ShareButtons';
 import BookmarkButton from '@/components/magazine/BookmarkButton';
 import ViewTracker from '@/components/magazine/ViewTracker';
+import HistoryTracker from '@/components/magazine/HistoryTracker';
 import AiDebate from '@/components/magazine/AiDebate';
 import {
   TranslatableHeadline,
@@ -75,6 +76,12 @@ export default async function ArticlePage({ params }: Props) {
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Header />
       <ViewTracker articleId={article.id} />
+      <HistoryTracker
+        articleId={article.id}
+        title={article.title}
+        imageUrl={article.imageUrl || ''}
+        category={article.category}
+      />
       <main className="flex-1">
         <article>
           {/* Cover: original photo (or archive/AI image), fallback generative art */}

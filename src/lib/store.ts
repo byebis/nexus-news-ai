@@ -175,10 +175,6 @@ interface NexusStore {
   setCurrentUser: (user: SessionUser | null) => void;
   setAuthChecked: (checked: boolean) => void;
 
-  // Selected article
-  selectedArticle: Article | null;
-  setSelectedArticle: (article: Article | null) => void;
-
   searchOpen: boolean;
   setSearchOpen: (open: boolean) => void;
 
@@ -223,9 +219,6 @@ export const useNexusStore = create<NexusStore>((set) => ({
   authChecked: false,
   setCurrentUser: (user) => set({ currentUser: user }),
   setAuthChecked: (checked) => set({ authChecked: checked }),
-
-  selectedArticle: null,
-  setSelectedArticle: (article) => set({ selectedArticle: article }),
 
   searchOpen: false,
   setSearchOpen: (open) => set({ searchOpen: open }),

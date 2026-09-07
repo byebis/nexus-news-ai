@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, X, Loader2, SlidersHorizontal, Newspaper } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -29,7 +29,6 @@ export default function SearchOverlay() {
   const categoryName = useCategoryName();
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-  const pathname = usePathname();
 
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('');
@@ -260,12 +259,7 @@ export default function SearchOverlay() {
                         key={r.id}
                         onClick={() => {
                           setSearchOpen(false);
-                          if (pathname?.startsWith('/articolo/')) {
-                            // Article page: no modal mounted → full navigation
-                            router.push(`/articolo/${r.id}`);
-                          } else {
-                            useNexusStore.getState().setSelectedArticle(r as Article);
-                          }
+                          router.push(`/articolo/${r.id}`);
                         }}
                         className="group flex w-full items-stretch gap-3 rounded-xl border p-2.5 text-left transition-colors hover:bg-muted/60"
                       >

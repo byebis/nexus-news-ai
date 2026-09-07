@@ -57,6 +57,7 @@ const routesConfig = {
     '/robots.txt',
     // '/sitemap.xml' NON escluso: ora e' una route dinamica (app/sitemap.xml/route.ts)
     '/manifest.json',
+    '/sw.js',
     '/icons/*',
     '/apple-icon*',
     '/icon*',

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Clock, ArrowRight, User } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNexusStore } from '@/lib/store';
@@ -21,7 +22,8 @@ const CATEGORY_BADGE_COLORS: Record<string, string> = {
 };
 
 export default function HeroSection() {
-  const { articles, setSelectedArticle } = useNexusStore();
+  const { articles } = useNexusStore();
+  const router = useRouter();
   const t = useT();
   const { lang } = useLang();
   const categoryName = useCategoryName();
@@ -62,7 +64,7 @@ export default function HeroSection() {
   return (
     <section
       className="group relative overflow-hidden rounded-2xl cursor-pointer"
-      onClick={() => setSelectedArticle(featured)}
+      onClick={() => router.push(`/articolo/${featured.id}`)}
     >
       {/* Cover photo of the featured article (fallback: generative art) */}
       <ArticleImage
@@ -140,7 +142,7 @@ export default function HeroSection() {
               className="mt-2 gap-2 bg-white text-gray-900 hover:bg-white/90 shadow-lg"
               onClick={(e) => {
                 e.stopPropagation();
-                setSelectedArticle(featured);
+                router.push(`/articolo/${featured.id}`);
               }}
             >
               {t('readMore')}

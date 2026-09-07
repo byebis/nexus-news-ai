@@ -1,6 +1,7 @@
 'use client';
 
-import { Zap } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Zap, Rss, Download } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useNexusStore } from '@/lib/store';
@@ -16,6 +17,11 @@ const CATEGORIES = [
   { name: 'Salute', labelKey: 'catHealth' },
 ];
 
+interface BipEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: string }>;
+}
+
 export default function Footer() {
   const { settings, setSelectedCategory, setViewMode } = useNexusStore();
   const t = useT();
@@ -25,6 +31,24 @@ export default function Footer() {
       ? 'Il futuro dell\'informazione, guidato dall\'intelligenza artificiale'
       : 'The future of news, powered by artificial intelligence');
   const currentYear = new Date().getFullYear();
+
+  const [installEvt, setInstallEvt] = useState<BipEvent | null>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setInstallEvt(e as BipEvent);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const install = async () => {
+    if (!installEvt) return;
+    await installEvt.prompt();
+    await installEvt.userChoice;
+    setInstallEvt(null);
+  };
 
   return (
     <footer className="mt-auto border-t bg-muted/30">
@@ -41,10 +65,31 @@ export default function Footer() {
             <p className="text-xs text-muted-foreground leading-relaxed max-w-xs">
               {tagline}
             </p>
-            <Badge variant="secondary" className="gap-1.5 text-xs">
-              <Zap className="h-3 w-3" />
-              {t('poweredBy')}
-            </Badge>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="secondary" className="gap-1.5 text-xs">
+                <Zap className="h-3 w-3" />
+                {t('poweredBy')}
+              </Badge>
+              <a
+                href="/feed.xml"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-full border bg-background px-2.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground hover:border-orange-400"
+                aria-label="RSS feed"
+              >
+                <Rss className="h-3 w-3 text-orange-500" />
+                RSS
+              </a>
+              {installEvt && (
+                <button
+                  onClick={install}
+                  className="inline-flex items-center gap-1.5 rounded-full border bg-background px-2.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground hover:border-sky-400"
+                >
+                  <Download className="h-3 w-3 text-sky-500" />
+                  {t('installApp')}
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Categories */}

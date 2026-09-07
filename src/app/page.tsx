@@ -11,7 +11,8 @@ import ArticleGrid from '@/components/magazine/ArticleGrid';
 import NewsTicker from '@/components/magazine/NewsTicker';
 import TrendingSection from '@/components/magazine/TrendingSection';
 import WeeklyDigestSection from '@/components/magazine/WeeklyDigestSection';
-import ArticleModal from '@/components/magazine/ArticleModal';
+import ForYouSection from '@/components/magazine/ForYouSection';
+import ContinueReading from '@/components/magazine/ContinueReading';
 import NewArticlesBanner from '@/components/magazine/NewArticlesBanner';
 import AdminPanel from '@/components/admin/AdminPanel';
 
@@ -42,8 +43,10 @@ export default function Home() {
           <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
             <NewsTicker />
             <HeroSection />
+            <ContinueReading />
             <TrendingSection />
             <WeeklyDigestSection />
+            <ForYouSection />
             <CategoryBar />
             <ArticleGrid />
           </div>
@@ -54,7 +57,6 @@ export default function Home() {
         )}
       </main>
 
-      <ArticleModal />
       <NewArticlesBanner />
       <Footer />
     </div>
