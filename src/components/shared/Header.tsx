@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Sun, Moon, Menu, X, Zap, Languages, Search } from 'lucide-react';
@@ -11,7 +12,7 @@ import SearchOverlay from '@/components/magazine/SearchOverlay';
 
 export default function Header() {
   const { theme, setTheme } = useTheme();
-  const { viewMode, setViewMode, settings, searchOpen, setSearchOpen } = useNexusStore();
+  const { viewMode, setViewMode, settings, searchOpen, setSearchOpen, setSelectedCategory } = useNexusStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const t = useT();
   const { lang, setLang } = useLang();
@@ -56,8 +57,16 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Logo area */}
-        <div className="flex items-center gap-3">
+        {/* Logo area — click torna alla homepage */}
+        <Link
+          href="/"
+          aria-label={`${siteName} — Home`}
+          onClick={() => {
+            setViewMode('magazine');
+            setSelectedCategory('all');
+          }}
+          className="flex items-center gap-3 rounded-lg outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring"
+        >
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-rose-500 to-orange-500 shadow-lg">
             <Zap className="h-5 w-5 text-white" />
           </div>
@@ -69,7 +78,7 @@ export default function Header() {
               {tagline}
             </p>
           </div>
-        </div>
+        </Link>
 
         {/* Desktop nav */}
         <nav className="hidden items-center gap-2 sm:flex">

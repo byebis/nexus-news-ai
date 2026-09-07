@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Zap, Rss, Download } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
@@ -56,12 +57,20 @@ export default function Footer() {
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {/* Brand */}
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
+            <Link
+              href="/"
+              aria-label={`${siteName} — Home`}
+              onClick={() => {
+                setViewMode('magazine');
+                setSelectedCategory('all');
+              }}
+              className="inline-flex items-center gap-2 rounded-lg outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring"
+            >
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-rose-500 to-orange-500">
                 <Zap className="h-4 w-4 text-white" />
               </div>
               <span className="text-sm font-bold tracking-tight">{siteName}</span>
-            </div>
+            </Link>
             <p className="text-xs text-muted-foreground leading-relaxed max-w-xs">
               {tagline}
             </p>
