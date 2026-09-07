@@ -40,7 +40,7 @@ export async function PUT(
       .from('articles')
       .update(updates)
       .eq('id', id)
-      .select('*, agent:agents(id, name, avatar, category), publish_logs(*), approval_log(*)')
+      .select('*, agent:agents(id, name, avatar, category), publish_logs(*), approval_logs(*)')
       .single();
 
     if (error) throw error;

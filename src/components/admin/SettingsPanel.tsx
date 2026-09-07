@@ -152,8 +152,10 @@ export default function SettingsPanel() {
 
           <div className={`flex items-center justify-between rounded-lg border p-3 transition-opacity ${isAutonomous || autoRewrite ? '' : 'opacity-50'}`}>
             <div>
-              <Label className="text-sm font-medium">Auto-pubblicazione</Label>
-              <p className="text-xs text-muted-foreground">Pubblica automaticamente sulle piattaforme</p>
+              <Label className="text-sm font-medium">🌀 Autopilota</Label>
+              <p className="text-xs text-muted-foreground">
+                Articoli con qualità ≥ 80 pubblicati da soli, senza coda di approvazione
+              </p>
             </div>
             <Switch
               checked={autoPublish}

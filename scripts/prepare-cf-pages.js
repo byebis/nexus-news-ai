@@ -55,7 +55,7 @@ const routesConfig = {
     '/favicon.svg',
     '/logo.svg',
     '/robots.txt',
-    '/sitemap.xml',
+    // '/sitemap.xml' NON escluso: ora e' una route dinamica (app/sitemap.xml/route.ts)
     '/manifest.json',
     '/icons/*',
     '/apple-icon*',

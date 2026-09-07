@@ -307,6 +307,8 @@ export async function collectNews(agentId: string) {
     .single();
   const settings = toCamelCase(settingsRaw || {}) as any;
   const isFullyAutonomous = settings?.mode === 'fully_autonomous';
+  const autoPublishOn = !!settings?.autoPublish;
+  const AUTOPILOT_THRESHOLD = 80;
 
   // Log: collecting
   await supabase.from('activity_logs').insert({
@@ -347,7 +349,21 @@ export async function collectNews(agentId: string) {
   const createdArticles: Array<Record<string, unknown>> = [];
   for (const article of result.articles) {
     const articleId = generateId();
-    const initialStatus = isFullyAutonomous ? 'approved' : 'pending_approval';
+
+    // AUTOPILOTA: se auto_publish è attivo e la qualità è sufficiente,
+    // l'articolo va direttamente pubblicato senza passare dalla coda.
+    let initialStatus = 'pending_approval';
+    let publishedAt: string | null = null;
+    let approvalNote = '';
+
+    if (autoPublishOn && article.qualityScore >= AUTOPILOT_THRESHOLD) {
+      initialStatus = 'published';
+      publishedAt = new Date().toISOString();
+      approvalNote = `Autopilota: qualità ${article.qualityScore} ≥ ${AUTOPILOT_THRESHOLD} → pubblicato automaticamente`;
+    } else if (isFullyAutonomous) {
+      initialStatus = 'approved';
+      approvalNote = 'Approvazione automatica - modalita completamente autonoma';
+    }
 
     const { error } = await supabase.from('articles').insert({
       id: articleId,
@@ -362,22 +378,43 @@ export async function collectNews(agentId: string) {
       quality_score: article.qualityScore,
       read_time: article.readTime,
       status: initialStatus,
+      published_at: publishedAt,
     });
 
     if (error) continue;
 
-    if (isFullyAutonomous) {
+    if (approvalNote) {
       await supabase.from('approval_logs').insert({
         article_id: articleId,
         reviewer_action: 'approved',
-        reviewer_note: 'Approvazione automatica - modalita completamente autonoma',
+        reviewer_note: approvalNote,
         reviewed_at: new Date().toISOString(),
+      });
+    }
+
+    if (initialStatus === 'published') {
+      // Registra pubblicazione automatica sulla piattaforma blog
+      await supabase.from('publish_logs').insert({
+        article_id: articleId,
+        platform: 'blog',
+        status: 'published',
+        post_id: `auto_${Date.now()}`,
+        post_url: '',
+        error: '',
+        published_at: publishedAt,
+      });
+      await supabase.from('activity_logs').insert({
+        agent_id: agent.id,
+        action: 'publishing',
+        detail: `Autopilota: "${article.title}" pubblicato (qualità ${article.qualityScore})`,
+        status: 'success',
       });
     }
 
     createdArticles.push({
       ...article,
       id: articleId,
+      status: initialStatus,
     });
   }
 
@@ -417,6 +454,82 @@ export async function fetchActivityLogs(): Promise<import('@/lib/store').Activit
   return data.map(toActivityLog);
 }
 
+// ============================================
+// Views / Trending (via activity_logs action='view')
+// ============================================
+
+export async function registerView(articleId: string) {
+  // Recupera l'agente dell'articolo (agent_id è NOT NULL su activity_logs)
+  const { data: article } = await supabase
+    .from('articles')
+    .select('agent_id')
+    .eq('id', articleId)
+    .single();
+  if (!article?.agent_id) throw new Error('Article not found for view');
+
+  const { error } = await supabase.from('activity_logs').insert({
+    agent_id: article.agent_id,
+    action: 'view',
+    detail: articleId,
+    status: 'success',
+  });
+  if (error) throw new Error('Failed to register view');
+  return { success: true };
+}
+
+export async function getArticleViews(articleId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('activity_logs')
+    .select('id', { count: 'exact', head: true })
+    .eq('action', 'view')
+    .eq('detail', articleId);
+  if (error) return 0;
+  return count || 0;
+}
+
+export interface TrendingItem {
+  article: import('@/lib/store').Article;
+  views: number;
+}
+
+export async function fetchTrendingArticles(limit = 5): Promise<TrendingItem[]> {
+  // Prendi gli ultimi eventi di lettura e aggrega in memoria
+  const { data: viewLogs, error } = await supabase
+    .from('activity_logs')
+    .select('detail')
+    .eq('action', 'view')
+    .order('created_at', { ascending: false })
+    .limit(2000);
+  if (error || !viewLogs) return [];
+
+  const counts = new Map<string, number>();
+  for (const row of viewLogs) {
+    const id = (row as { detail: string }).detail;
+    if (!id) continue;
+    counts.set(id, (counts.get(id) || 0) + 1);
+  }
+  const topIds = [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit * 2)
+    .map(([id]) => id);
+  if (topIds.length === 0) return [];
+
+  const { data: articles } = await supabase
+    .from('articles')
+    .select('*, agent:agents(id, name, avatar, category)')
+    .eq('status', 'published')
+    .in('id', topIds);
+  if (!articles) return [];
+
+  return articles
+    .map(row => ({
+      article: toArticle(row),
+      views: counts.get((row as { id: string }).id) || 0,
+    }))
+    .sort((a, b) => b.views - a.views)
+    .slice(0, limit);
+}
+
 export async function fetchSettings(): Promise<import('@/lib/store').Settings | null> {
   const { data, error } = await supabase
     .from('settings')
@@ -427,7 +540,37 @@ export async function fetchSettings(): Promise<import('@/lib/store').Settings | 
   return toCamelCase(data) as any;
 }
 
+const SETTINGS_FIELD_MAP: Record<string, string> = {
+  // accetta sia camelCase (UI client) che snake_case (route server)
+  mode: 'mode',
+  autoCollect: 'auto_collect',
+  auto_collect: 'auto_collect',
+  autoEvaluate: 'auto_evaluate',
+  auto_evaluate: 'auto_evaluate',
+  autoRewrite: 'auto_rewrite',
+  auto_rewrite: 'auto_rewrite',
+  autoPublish: 'auto_publish',
+  auto_publish: 'auto_publish',
+  collectInterval: 'collect_interval',
+  collect_interval: 'collect_interval',
+  maxArticlesPerDay: 'max_articles_per_day',
+  max_articles_per_day: 'max_articles_per_day',
+  socialPlatforms: 'social_platforms',
+  social_platforms: 'social_platforms',
+  siteName: 'site_name',
+  site_name: 'site_name',
+  siteTagline: 'site_tagline',
+  site_tagline: 'site_tagline',
+};
+
 export async function updateSettings(settingsData: Record<string, unknown>) {
+  // Converti camelCase (UI) -> snake_case (Supabase)
+  const mapped: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(settingsData)) {
+    const col = SETTINGS_FIELD_MAP[key];
+    if (col) mapped[col] = value;
+  }
+
   const { data: existing } = await supabase
     .from('settings')
     .select('id')
@@ -437,7 +580,7 @@ export async function updateSettings(settingsData: Record<string, unknown>) {
   if (existing) {
     const { data: updated, error } = await supabase
       .from('settings')
-      .update(settingsData)
+      .update(mapped)
       .eq('id', existing.id)
       .select()
       .single();
@@ -446,7 +589,7 @@ export async function updateSettings(settingsData: Record<string, unknown>) {
   } else {
     const { data: inserted, error } = await supabase
       .from('settings')
-      .insert(settingsData)
+      .insert(mapped)
       .select()
       .single();
     if (error) throw error;

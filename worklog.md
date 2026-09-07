@@ -132,3 +132,30 @@ Stage Summary:
 - Commit 3c48357 pushato (30 file, +1224 righe)
 - Sito livello premium: raccolta REALE funzionante da UI, dashboard statistiche, pagine articolo, PWA, automazione cron
 - Per attivare cron automatico: aggiungi secret CRON_SECRET nel repo GitHub (Settings->Secrets->Actions)
+
+---
+Task ID: levelup-2
+Agent: main (Sasobot)
+Task: Level-Up 2 — Autopilota, letture/trending, Chiosco AI, feed RSS uscente, sitemap, bookmark, editor redazionale
+
+Work Log:
+- AUTOPILOTA: in collectNews, se settings.auto_publish e quality_score>=80 -> status 'published' diretto con published_at, approval_log automatico, publish_log blog e activity 'Autopilota'
+- SettingsPanel: toggle rinominato "Autopilota" con descrizione soglia >= 80
+- FIX CRITICO settings: updateSettings inviava camelCase a Supabase -> mappa bidirezionale camelCase<->snake_case (il PUT route gia' convertiva, ora entrambi i percorsi funzionano)
+- VIEWS: POST /api/views registra letture in activity_logs(action='view', detail=articleId); getArticleViews con count exact; ViewTracker client 1/sessione (sessionStorage)
+- TRENDING: /api/views/trending aggrega ultime 2000 view logs -> top 5; TrendingSection in homepage tra hero e categorie; badge "N letture" su card pagina articolo
+- CHIOSCO AI: GET /api/debate?articleId -> 3 agenti di categorie diverse commentano l'articolo con voto 0-100; cache in activity_logs(action='ai_debate_<id>', detail=JSON); rigenerata dopo fix troncamento (limite 320 caratteri/commento nel prompt, slice 700)
+- FEED RSS USCENTE: /feed.xml RSS 2.0 con 30 articoli pubblicati (dc:creator, category, pubDate)
+- SITEMAP DINAMICA: /sitemap.xml con tutti gli articoli pubblicati + fix _routes.json (sitemap rimossa dagli exclude, era 404)
+- robots.txt: aggiunta riga Sitemap
+- BOOKMARKS: useBookmarks (zustand + localStorage 'nexus_bookmarks'), BookmarkButton floating su card + inline su pagina articolo, filtro "Da leggere" in CategoryBar
+- FIX ArticleGrid: gestiva 'bookmarks' come categoria API -> rifetch vuoto; ora filtra localmente sui salvati
+- EDITOR REDAZIONALE: ApprovalQueue bottone "Modifica" -> Dialog con titolo/sottotitolo/riassunto/testo + word count; PUT /api/articles/[id]; fix typo approval_log->approval_logs
+- Test browser: chiosco renderizzato (3 commenti + voti), badge "1 letture", trending OK, bookmark persistito, filtro Da leggere OK (1 articolo), editor E2E (corretta parola russa 'успокоили'->'rassicurato', toast OK, persistito su DB)
+- HealthDesk raccolta reale ANSA: articolo Regina Margherita qualita' 65 -> pending (autopilota corretto: solo >=80 pubblica)
+- Rete sandbox giu' a fine sessione (google 000): sito NON e' colpito, deploy d9ff8f67 riuscito prima
+
+Stage Summary:
+- Deploy live: https://nexus-news-ai.pages.dev (deployment d9ff8f67)
+- Nuove feature attive: Autopilota, letture+trending, Chiosco AI, feed.xml, sitemap.xml, bookmark+Da leggere, editor redazionale
+- Da fare: commit/push quando la rete torna; rigenerazione debate cache-less avviene automaticamente alla prima visita (~25s)

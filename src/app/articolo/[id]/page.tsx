@@ -1,11 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { fetchArticleById, fetchArticles } from '@/lib/api';
+import { fetchArticleById, fetchArticles, getArticleViews } from '@/lib/api';
 import { CATEGORY_META } from '@/lib/categories';
 import { ArticleCover } from '@/components/magazine/ArticleCover';
 import { ShareButtons } from '@/components/magazine/ShareButtons';
-import { ArrowLeft, Clock, ShieldCheck, User } from 'lucide-react';
+import BookmarkButton from '@/components/magazine/BookmarkButton';
+import ViewTracker from '@/components/magazine/ViewTracker';
+import AiDebate from '@/components/magazine/AiDebate';
+import { ArrowLeft, Clock, ShieldCheck, User, Eye } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import ArticleCard from '@/components/magazine/ArticleCard';
 import Header from '@/components/shared/Header';
@@ -48,6 +51,8 @@ export default async function ArticlePage({ params }: Props) {
     .filter((a) => a.id !== article.id)
     .slice(0, 3);
 
+  const views = await getArticleViews(article.id);
+
   const meta = CATEGORY_META[article.category] || CATEGORY_META.default;
   const dateStr = new Date(article.publishedAt || article.createdAt).toLocaleDateString('it-IT', {
     day: 'numeric', month: 'long', year: 'numeric',
@@ -57,6 +62,7 @@ export default async function ArticlePage({ params }: Props) {
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Header />
+      <ViewTracker articleId={article.id} />
       <main className="flex-1">
         <article>
           {/* Cover */}
@@ -78,6 +84,11 @@ export default async function ArticlePage({ params }: Props) {
                   <Badge variant="outline" className="gap-1">
                     <ShieldCheck className="h-3 w-3 text-emerald-500" /> Qualità {article.qualityScore}%
                   </Badge>
+                  {views > 0 && (
+                    <Badge variant="outline" className="gap-1">
+                      <Eye className="h-3 w-3 text-orange-500" /> {views} letture
+                    </Badge>
+                  )}
                 </div>
                 <h1 className="mt-3 text-3xl md:text-5xl font-extrabold tracking-tight leading-tight">
                   {article.title}
@@ -101,8 +112,13 @@ export default async function ArticlePage({ params }: Props) {
                 <span>{dateStr}</span>
                 <span>·</span>
                 <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {article.readTime} min</span>
+                <span>·</span>
+                <span className="flex items-center gap-1"><Eye className="h-3.5 w-3.5" /> {views} letture</span>
               </div>
-              <ShareButtons title={article.title} />
+              <div className="flex items-center gap-2">
+                <BookmarkButton articleId={article.id} />
+                <ShareButtons title={article.title} />
+              </div>
             </div>
 
             <div className="py-8 space-y-6 text-[1.05rem] leading-relaxed">
@@ -116,6 +132,9 @@ export default async function ArticlePage({ params }: Props) {
                 <p className="text-muted-foreground">{article.summary}</p>
               )}
             </div>
+
+            {/* Il Chiosco — dibattito AI sulla pagina */}
+            <AiDebate articleId={article.id} />
 
             {/* Source attribution */}
             {article.sourceUrl && (

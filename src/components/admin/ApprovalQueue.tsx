@@ -1,10 +1,15 @@
 'use client';
 
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, X, Loader2, ShieldCheck, ExternalLink, User } from 'lucide-react';
+import { Check, X, Loader2, ShieldCheck, ExternalLink, User, Pencil, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { useNexusStore } from '@/lib/store';
 import { toast } from '@/hooks/use-toast';
 import { approveArticle } from '@/lib/api';
@@ -29,6 +34,14 @@ function getQualityColor(score: number): string {
 function ApprovalCard({ article }: { article: Article }) {
   const { loadingApprove, setLoadingApprove, setPendingArticles } = useNexusStore();
   const isLoading = loadingApprove === article.id;
+  const [editOpen, setEditOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [draft, setDraft] = useState({
+    title: article.title,
+    subtitle: article.subtitle || '',
+    summary: article.summary || '',
+    content: article.content || '',
+  });
 
   const categoryLower = article.category?.toLowerCase() || 'tecnologia';
   const badgeClass = CATEGORY_BADGE_COLORS[categoryLower] || CATEGORY_BADGE_COLORS.tecnologia;
@@ -54,6 +67,40 @@ function ApprovalCard({ article }: { article: Article }) {
       });
     } finally {
       setLoadingApprove(null);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!draft.title.trim() || draft.title.trim().length < 10) {
+      toast({ title: 'Titolo troppo corto', description: 'Il titolo deve avere almeno 10 caratteri.', variant: 'destructive' });
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const res = await fetch(`/api/articles/${article.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: draft.title.trim(),
+          subtitle: draft.subtitle.trim(),
+          summary: draft.summary.trim(),
+          content: draft.content.trim(),
+        }),
+      });
+      if (!res.ok) throw new Error('save failed');
+
+      // Aggiorna la lista locale con i nuovi dati
+      setPendingArticles(
+        useNexusStore.getState().pendingArticles.map((a) =>
+          a.id === article.id ? { ...a, ...draft, title: draft.title.trim() } : a
+        )
+      );
+      toast({ title: 'Articolo aggiornato', description: 'Le modifiche redazionali sono state salvate.' });
+      setEditOpen(false);
+    } catch {
+      toast({ title: 'Errore', description: 'Impossibile salvare le modifiche.', variant: 'destructive' });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -126,6 +173,16 @@ function ApprovalCard({ article }: { article: Article }) {
         </Button>
         <Button
           size="sm"
+          variant="outline"
+          onClick={() => setEditOpen(true)}
+          disabled={isLoading}
+          className="flex-1 gap-1.5"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+          Modifica
+        </Button>
+        <Button
+          size="sm"
           variant="destructive"
           onClick={() => handleAction('reject')}
           disabled={isLoading}
@@ -135,6 +192,76 @@ function ApprovalCard({ article }: { article: Article }) {
           Rifiuta
         </Button>
       </div>
+
+      {/* Editor redazionale */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="h-4 w-4" /> Editor redazionale
+            </DialogTitle>
+            <DialogDescription>
+              Rifinisci l&apos;articolo prima di approvarlo. Le modifiche sovrascrivono il testo AI.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor={`title-${article.id}`}>Titolo</Label>
+              <Input
+                id={`title-${article.id}`}
+                value={draft.title}
+                onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+                maxLength={200}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor={`subtitle-${article.id}`}>Sottotitolo</Label>
+              <Input
+                id={`subtitle-${article.id}`}
+                value={draft.subtitle}
+                onChange={(e) => setDraft({ ...draft, subtitle: e.target.value })}
+                maxLength={300}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor={`summary-${article.id}`}>Riassunto</Label>
+              <Textarea
+                id={`summary-${article.id}`}
+                value={draft.summary}
+                onChange={(e) => setDraft({ ...draft, summary: e.target.value })}
+                rows={2}
+                maxLength={400}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor={`content-${article.id}`}>
+                Testo dell&apos;articolo
+                <span className="ml-2 text-xs font-normal text-muted-foreground">
+                  {draft.content.trim().split(/\s+/).filter(Boolean).length} parole
+                </span>
+              </Label>
+              <Textarea
+                id={`content-${article.id}`}
+                value={draft.content}
+                onChange={(e) => setDraft({ ...draft, content: e.target.value })}
+                rows={14}
+                className="text-sm leading-relaxed font-normal"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setEditOpen(false)} disabled={isSaving}>
+              Annulla
+            </Button>
+            <Button onClick={handleSave} disabled={isSaving} className="gap-1.5">
+              {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              Salva modifiche
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }

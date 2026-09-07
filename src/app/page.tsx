@@ -9,6 +9,7 @@ import HeroSection from '@/components/magazine/HeroSection';
 import CategoryBar from '@/components/magazine/CategoryBar';
 import ArticleGrid from '@/components/magazine/ArticleGrid';
 import NewsTicker from '@/components/magazine/NewsTicker';
+import TrendingSection from '@/components/magazine/TrendingSection';
 import ArticleModal from '@/components/magazine/ArticleModal';
 import AdminPanel from '@/components/admin/AdminPanel';
 
@@ -39,6 +40,7 @@ export default function Home() {
           <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
             <NewsTicker />
             <HeroSection />
+            <TrendingSection />
             <CategoryBar />
             <ArticleGrid />
           </div>

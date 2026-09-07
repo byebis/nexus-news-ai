@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Clock, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useNexusStore } from '@/lib/store';
+import BookmarkButton from '@/components/magazine/BookmarkButton';
 import type { Article } from '@/lib/store';
 
 const CATEGORY_GRADIENTS: Record<string, string> = {
@@ -77,6 +78,7 @@ export default function ArticleCard({ article, index = 0 }: ArticleCardProps) {
             {article.category}
           </Badge>
         </div>
+        <BookmarkButton articleId={article.id} floating />
       </div>
 
       {/* Content */}

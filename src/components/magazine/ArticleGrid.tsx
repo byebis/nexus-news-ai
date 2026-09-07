@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useNexusStore } from '@/lib/store';
 import { fetchArticles } from '@/lib/api';
+import { useBookmarks } from '@/hooks/useBookmarks';
 import ArticleCard from './ArticleCard';
 
 type SortMode = 'recent' | 'quality';
@@ -21,11 +22,19 @@ export default function ArticleGrid() {
     async function loadArticles() {
       setLoading(true);
       try {
-        const data = await fetchArticles({
+        let data = await fetchArticles({
           status: 'published',
-          limit: 30,
-          category: selectedCategory && selectedCategory !== 'all' ? selectedCategory : undefined,
+          limit: 50,
+          category:
+            selectedCategory && selectedCategory !== 'all' && selectedCategory !== 'bookmarks'
+              ? selectedCategory
+              : undefined,
         });
+        if (selectedCategory === 'bookmarks') {
+          useBookmarks.getState().hydrate();
+          const saved = new Set(useBookmarks.getState().ids);
+          data = data.filter((a) => saved.has(a.id));
+        }
         if (!cancelled) setArticles(data);
       } catch {
         // Silently fail
@@ -39,8 +48,15 @@ export default function ArticleGrid() {
 
   const filteredArticles = useMemo(() => {
     let list = articles.filter(
-      (a) => selectedCategory === 'all' || a.category === selectedCategory
+      (a) =>
+        selectedCategory === 'all' ||
+        selectedCategory === 'bookmarks' ||
+        a.category === selectedCategory
     );
+    if (selectedCategory === 'bookmarks') {
+      const saved = new Set(useBookmarks.getState().ids);
+      list = list.filter((a) => saved.has(a.id));
+    }
     const q = query.trim().toLowerCase();
     if (q) {
       list = list.filter(

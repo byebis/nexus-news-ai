@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useNexusStore } from '@/lib/store';
 import { fetchArticles } from '@/lib/api';
+import { useBookmarks } from '@/hooks/useBookmarks';
 
 interface CategoryItem {
   name: string;
@@ -20,16 +21,27 @@ const CATEGORIES: CategoryItem[] = [
   { name: 'Sport', label: 'Sport', emoji: '⚽' },
   { name: 'Cultura', label: 'Cultura', emoji: '🎭' },
   { name: 'Salute', label: 'Salute', emoji: '🏥' },
+  { name: 'bookmarks', label: 'Da leggere', emoji: '🔖' },
 ];
 
 export default function CategoryBar() {
   const { selectedCategory, setSelectedCategory, setArticles } = useNexusStore();
+  const hydrate = useBookmarks((s) => s.hydrate);
 
   const handleCategoryClick = useCallback(
     async (catName: string) => {
       setSelectedCategory(catName);
+      hydrate();
 
       try {
+        if (catName === 'bookmarks') {
+          // Filtra gli articoli pubblicati sui salvati in locale
+          const data = await fetchArticles({ status: 'published', limit: 50 });
+          const saved = new Set(useBookmarks.getState().ids);
+          setArticles(data.filter((a) => saved.has(a.id)));
+          return;
+        }
+
         const data = await fetchArticles({
           status: 'published',
           limit: 20,
@@ -40,7 +52,7 @@ export default function CategoryBar() {
         // Silently fail - articles will remain unchanged
       }
     },
-    [setSelectedCategory, setArticles]
+    [setSelectedCategory, setArticles, hydrate]
   );
 
   return (
