@@ -185,3 +185,32 @@ Stage Summary:
 - Commit 2dd4a34 pushato su GitHub
 - Sito live: https://nexus-news-ai.pages.dev con reader premium (ascolta/zoom/progresso), share completo, monitoraggio salute, banner nuovi articoli, skeleton
 - Nota: TTS richiede browser con voci installate (Chrome/Edge/Safari desktop e mobile OK; headless mostra toast informativo)
+
+---
+Task ID: levelup-4
+Agent: main (Sasobot)
+Task: Level-Up 4 — login con ruoli admin/editor, gestione utenti, canali social configurabili, pubblicazione multi-canale selettiva
+
+Work Log:
+- MIGRATION Supabase (scripts/migrate-levelup4.py, pooler aws-1-eu-central-2 — il vecchio aws-0 non ospita più il tenant):
+  * tabella users (email, password_hash pbkdf2$100000$salt$hash PBKDF2-SHA256, name, role admin|editor, active, last_login_at)
+  * tabella channel_configs (channel unique, label, enabled, config jsonb, last_test_*)
+  * agente di sistema 'sys-redazione' (category=redazione) per audit log (activity_logs.agent_id NOT NULL)
+  * seed: admin@nexusnews.ai/Admin2026!, editor@nexusnews.ai/Editor2026!
+  * ALTER constraint publish_logs: platform +telegram/webhook, status +skipped
+- AUTH (src/lib/auth.ts): hashPassword/verifyPassword PBKDF2 via Web Crypto (compatibile CF Workers), sessioni HMAC-SHA256 (token payload.sig base64url), cookie nexus_session httpOnly SameSite=Lax 7gg, getSessionUser, requireRole(roles) → 401/403
+- API NUOVE: /api/auth/login|logout|me, /api/users GET+POST (admin), /api/users/[id] PATCH+DELETE (admin, protezioni: no auto-disattivazione, no rimozione ultimo admin), /api/channels GET (admin+editor, segreti mascherati ••••+ultime4), PUT (admin, merge segreti mascherati), /api/channels/test (admin: test REALE Telegram getMe+getChat, webhook POST ping)
+- PUBLISH REALE riscritto (api.ts publishArticle): niente più Math.random simulato! Per canale: blog=reale (sempre), telegram=Bot API sendMessage HTML reale, webhook=POST JSON reale (payload article+url+categoria), twitter/linkedin/instagram/facebook=relay_webhook proprio o webhook globale, altrimenti status 'skipped' con motivo chiaro. Skip 'già pubblicato' anti-doppioni. publish_log per canale con detail/post_url. Article published se ≥1 canale ok.
+- ROTTE PROTETTE: PUT /api/settings (admin), PUT /api/agents (admin), POST /api/publish (admin+editor)
+- UI: LoginGate.tsx (form login elegante), AdminPanel auth-aware (check /api/auth/me, header con nome+badge ruolo+Esci, tab filtrate per ruolo via TAB_ROLES), UsersPanel.tsx (lista/crea/ruolo/password/attiva/elimina), ChannelsPanel.tsx (7 card canali con switch, campi config, Salva+Test connessione, hint per ogni canale), PublishingPanel.tsx (chip selettore canali per articolo con default blog+attivi, badge ⚙︎ per non configurati, bottoni con plurale corretto, risultati per canale)
+- AgentManager: agente redazione nascosto da griglia e contatore; collect-all esclude sys-redazione
+- ENV: AUTH_SECRET random 32byte in wrangler.toml vars + .env
+- Test E2E API live (26 check): login errato 401, login admin/editor OK, me, users CRUD completo (create/role/deactivate→login bloccato 403/reset/reactivate/delete/auto-protezione 400), permessi editor (users 403, settings PUT 403, channels GET 200, channels PUT 403), publish solo-blog, publish con canali non configurati→skipped, webhook reale via httpbin (test connessione HTTP 200 + publish HTTP 200), telegram senza token→messaggio chiaro
+- Test browser live: login screen→admin (9 tab visibili), tab Utenti (2 utenti+azioni), tab Canali (7 canali renderizzati), Pubblicazione (chip canali, publish UI→webhook published confermato su DB), logout→login editor (5 tab editoriali, Agenti/Impostazioni/Canali/Utenti nascoste), sessione persistente dopo reload, contatore agenti 7/7
+- 3 deploy CF: ef34b541, 300bdf83, ef11fe1b, ab1a70f4 (fix plurale "canalei"→"canale/canali", conteggio agenti)
+
+Stage Summary:
+- Commit a58b8fa pushato
+- Sito live: https://nexus-news-ai.pages.dev con login redazione, ruoli admin/editor, gestione utenti, canali social configurabili (telegram+webhook REALI), pubblicazione selettiva multi-canale
+- Credenziali prova: admin@nexusnews.ai / Admin2026! · editor@nexusnews.ai / Editor2026!
+- Nota: per X/LinkedIn/Instagram/Facebook serve un relay webhook (Make/Zapier/n8n) — campo relay_webhook nelle impostazioni canale
