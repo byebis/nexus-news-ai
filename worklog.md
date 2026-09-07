@@ -362,3 +362,27 @@ Stage Summary:
 - L9 LIVE: il giornale ha ora un'AI conversazionale pubblica (Chiedi a Nexus con fonti) e uno studio AI in redazione (Copilot con bozze firmate dagli agenti -> coda approvazione)
 - Profilo: Anton puo' cambiarsi la password da solo (bottone Admin -> tab Profilo); password admin ripristinata a Admin2026! e verificata
 - Bozza Copilot "AI e imprese italiane" lasciata IN CODA come demo per Anton (puo' approvarla per vedere il flusso completo con foto)
+
+---
+Task ID: fix-empty-site
+Agent: Super Z (main)
+Task: Sito tutto vuoto (report Anton con 3 screenshot mobile): homepage "Nessun articolo", admin "Nessun agente configurato", "Coda vuota"
+
+Work Log:
+- curl API production: /api/articles e /api/agents OK con dati -> DB NON vuoto, problema client-side
+- Riprodotto con agent-browser: grid homepage vuoto mentre trending+digest funzionano; performance API calls mostra SOLO /api/views/trending e /api/digests -> mai chiamata /api/articles
+- Causa architetturale: componenti client (ArticleGrid, AgentManager, ApprovalQueue) usano supabase-js DIRETTAMENTE con NEXT_PUBLIC_* inlineate a BUILD time; trending/digest passano da API routes server-side (env runtime CF) -> spiegazione del mismatch
+- ROOT CAUSE: ambiente resettato tra sessioni -> .env ridotto a solo DATABASE_URL -> build Level 9 delle 15:15 SENZA chiavi Supabase -> bundle client senza URL/anon key -> getSupabase() throw -> fetch silent fail -> stati vuoti ovunque
+- FIX PERMANENTE: scripts/sync-env-from-wrangler.js (parse [vars] da wrangler.toml, merge in .env se mancanti, mai stampa segreti) + inserito nel pipeline pages:build PRIMA di next build
+- .env ricostruito (4 chiavi: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, CRON_SECRET, AUTH_SECRET, chmod 600)
+- Verifica pre-build: curl PostgREST con anon key -> HTTP 200, 3 righe (RLS ok)
+- Rebuild + redeploy (deployment 71259196); verificato URL supabase inlineato in .open-next/_next/static/chunks/
+- E2E live: homepage 0 empty-state, 15 card nel grid, trending+digest OK; login admin OK; tab Agenti: 7/7 attivi con contatori; tab Coda: bozza demo Copilot + articoli pending visibili con Qualita'/Approva/Modifica/Rifiuta
+- Screenshot: fix-home-articles-ok.png, fix-agenti-ok.png, fix-coda-ok.png
+- Commit 4edf28f pushato (package.json + script sync)
+
+Stage Summary:
+- SITE RESTORED: causa = env perse al build time (disastro gia' accaduto, ora PREVENUTO dallo script nel pipeline)
+- Le API routes e il DB non sono mai stati compromessi; solo il bundle client era rotto dal deploy Level 9 7cf03a9
+- BOZZA COPILOT ancora in coda per Anton ("AI e imprese italiane" di TechBot) + 3+ articoli pending da approvare
+- Lezione: MAI fidarsi del .env locale; lo script sync-env-from-wrangler.js ora garantisce le chiavi a ogni build
