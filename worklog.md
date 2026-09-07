@@ -386,3 +386,33 @@ Stage Summary:
 - Le API routes e il DB non sono mai stati compromessi; solo il bundle client era rotto dal deploy Level 9 7cf03a9
 - BOZZA COPILOT ancora in coda per Anton ("AI e imprese italiane" di TechBot) + 3+ articoli pending da approvare
 - Lezione: MAI fidarsi del .env locale; lo script sync-env-from-wrangler.js ora garantisce le chiavi a ogni build
+
+---
+Task ID: levelup-10
+Agent: Super Z (main)
+Task: Level 10 — architettura da vero magazine: pagine dedicate /login, /admin, /categoria/[slug]; categorie nel menu; Anton: "Devi tornare al magazine per vedere il pannello ma perché?"
+
+Work Log:
+- Analisi request Anton (screenshot menu mobile attuale: solo lingua/ricerca/tema, niente categorie; admin accessibile solo come viewMode della homepage)
+- NUOVO /login: pagina dedicata minimal-editoriale (header ridotto, card centrata, back "Torna al magazine", noindex); LoginForm.tsx (ex LoginGate) con redirect ?redirect=/admin via useSearchParams+Suspense
+- NUOVO /admin: route dedicata con header proprio; AdminPanel: se non autenticato -> router.replace('/login?redirect=/admin'); logout -> router.push('/'); link "← Magazine" nell'header del pannello
+- NUOVE /categoria/[slug]: generateStaticParams (7 sezioni), generateMetadata (title via template, OG, canonical), notFound() su slug invalido; CategoryClient: breadcrumb Home > Sezione, hero gradient-colore-categoria con emoji+descrizione i18n+count articoli, toolbar ricerca+ordina, grid ArticleCard, skeleton+empty state
+- categories.ts: aggiunti CATEGORY_DEFS (name/slug/labelKey/descKey), slugForCategory(), categoryBySlug()
+- i18n: +16 chiavi (menuHome, menuSections, menuServices, accessoRedazione, catDesc* x7, catArticlesCount, catEmptyBody, loginPageTagline, loginBackHome, loginNoAccount, catBreadcrumbHome)
+- Header rifatto stile NYT/Repubblica: riga 1 logo+DATA odierna localizzata (client-side, no hydration mismatch); riga 2 nav sezioni desktop sticky con underline attiva via usePathname; hamburger mobile con SEZIONI (Home+7 categorie con emoji+chevron), SERVIZI (ricerca, Accesso Redazione, lingua, tema); chiusura automatica su navigazione; niente nav su /admin e /login
+- page.tsx homepage: rimossa entirely la logica viewMode/admin (era il "perché devo tornare al magazine?" di Anton)
+- CategoryBar: categorie ora Link reali a /categoria/[slug]; "Da leggere" resta filtro in-page via router.push('/')
+- Footer: categorie Link reali + link "Accesso Redazione" (/login) nella colonna Info
+- ArticleCard: card ora crawlabili — Link assoluto inset-0 z-[1] su tutta la card (SEO+accessibilità) al posto di onClick router.push; BookmarkButton resta cliccabile (z-10)
+- sitemap.xml: +7 URL sezione (daily, priority 0.6)
+- RIPARI infra: .cf-credentials cancellato di nuovo dall'ambiente -> ricreato+verificato (token active); sync-env-from-wrangler.js ha funzionato al rebuild (".env already complete (5 keys)")
+- Build 2x OK (40 pagine statiche); deploy 8ddc8e25 poi d8b7897e
+- E2E live: header nav (/,/categoria/x7,/admin) + data "lunedì 7 settembre 2026"; /categoria/tecnologia: title "Tecnologia | Nexus News AI" (fix duplicazione con template layout), hero, 7 articoli crawlabili; click card -> /articolo ok; /admin da logout -> redirect /login?redirect=/admin; login -> /admin pannello 13 tab; mobile 390px: menu con tutte le sezioni, navigazione a /categoria/sport ok, overflow 0px
+- Screenshot: l10-desktop-home.png, l10-categoria-tecnologia.png, l10-login-page.png, l10-mobile-sport.png
+- Commit 008bd69 pushato (nota: 6 file solo mode-change 644->755 dall'ambiente, nessun contenuto)
+
+Stage Summary:
+- L10 LIVE: il sito ora è un vero magazine multi-pagina: /, /categoria/[slug] x7, /articolo/[id], /login, /admin — zero viewMode toggle
+- Le categorie sono raggiungibili da: nav desktop, menu mobile, CategoryBar home, footer, sitemap
+- Anton ha approvato la bozza Copilot nel frattempo ("AI e imprese italiane" ora pubblicata, visibile in /categoria/tecnologia)
+- Codici creazione account: admin crea utenti dal tab Utenti; /login noindex
