@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
   Bot,
@@ -20,13 +22,13 @@ import {
   ImageIcon,
   Sparkles,
   UserRound,
+  ArrowLeft,
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNexusStore, TAB_ROLES, type AdminTab, type SessionUser } from '@/lib/store';
 import { fetchAgents, fetchPendingArticles, fetchActivityLogs, fetchSettings } from '@/lib/api';
-import LoginGate from './LoginGate';
 import AgentManager from './AgentManager';
 import ApprovalQueue from './ApprovalQueue';
 import PublishingPanel from './PublishingPanel';
@@ -71,6 +73,7 @@ const ROLE_INFO: Record<string, { label: string; icon: React.ReactNode; badge: s
 };
 
 export default function AdminPanel() {
+  const router = useRouter();
   const {
     adminTab,
     setAdminTab,
@@ -140,22 +143,25 @@ export default function AdminPanel() {
     } finally {
       setCurrentUser(null);
       setLoggingOut(false);
+      // Torna al magazine dopo il logout
+      router.push('/');
     }
   };
 
-  // Caricamento sessione in corso
-  if (!authChecked) {
+  // Non autenticato: rimanda alla pagina di login dedicata
+  useEffect(() => {
+    if (authChecked && !currentUser) {
+      router.replace('/login?redirect=/admin');
+    }
+  }, [authChecked, currentUser, router]);
+
+  if (!authChecked || !currentUser) {
     return (
       <div className="flex items-center justify-center py-24 gap-2 text-muted-foreground">
         <Loader2 className="h-5 w-5 animate-spin" />
         <span className="text-sm">Verifica sessione…</span>
       </div>
     );
-  }
-
-  // Non autenticato: mostra login
-  if (!currentUser) {
-    return <LoginGate />;
   }
 
   const role = currentUser.role;
@@ -172,6 +178,13 @@ export default function AdminPanel() {
     >
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground mb-1"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Magazine
+          </Link>
           <h2 className="text-2xl font-bold tracking-tight">Pannello di Amministrazione</h2>
           <p className="text-sm text-muted-foreground mt-1">
             Gestisci i tuoi agenti AI, approva articoli e monitora l&apos;attività.

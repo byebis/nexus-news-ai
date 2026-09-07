@@ -2,21 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Zap, Rss, Download } from 'lucide-react';
+import { Zap, Rss, Download, Shield } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useNexusStore } from '@/lib/store';
 import { useT } from '@/lib/i18n';
-
-const CATEGORIES = [
-  { name: 'Tecnologia', labelKey: 'catTechnology' },
-  { name: 'Politica', labelKey: 'catPolitics' },
-  { name: 'Economia', labelKey: 'catEconomy' },
-  { name: 'Scienza', labelKey: 'catScience' },
-  { name: 'Sport', labelKey: 'catSport' },
-  { name: 'Cultura', labelKey: 'catCulture' },
-  { name: 'Salute', labelKey: 'catHealth' },
-];
+import { CATEGORY_DEFS } from '@/lib/categories';
 
 interface BipEvent extends Event {
   prompt: () => Promise<void>;
@@ -24,7 +15,7 @@ interface BipEvent extends Event {
 }
 
 export default function Footer() {
-  const { settings, setSelectedCategory, setViewMode } = useNexusStore();
+  const { settings } = useNexusStore();
   const t = useT();
   const siteName = settings?.siteName || 'NEXUS NEWS AI';
   const tagline = settings?.siteTagline
@@ -60,10 +51,6 @@ export default function Footer() {
             <Link
               href="/"
               aria-label={`${siteName} — Home`}
-              onClick={() => {
-                setViewMode('magazine');
-                setSelectedCategory('all');
-              }}
               className="inline-flex items-center gap-2 rounded-lg outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring"
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-rose-500 to-orange-500">
@@ -105,17 +92,14 @@ export default function Footer() {
           <div className="space-y-3">
             <h3 className="text-sm font-semibold">{t('categories')}</h3>
             <ul className="flex flex-wrap gap-2">
-              {CATEGORIES.map((cat) => (
-                <li key={cat.name}>
-                  <button
-                    onClick={() => {
-                      setSelectedCategory(cat.name);
-                      setViewMode('magazine');
-                    }}
+              {CATEGORY_DEFS.map((cat) => (
+                <li key={cat.slug}>
+                  <Link
+                    href={`/categoria/${cat.slug}`}
                     className="text-xs text-muted-foreground transition-colors hover:text-foreground"
                   >
                     {t(cat.labelKey)}
-                  </button>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -134,6 +118,15 @@ export default function Footer() {
                 <span className="text-xs text-muted-foreground">
                   © {currentYear} {siteName}. {t('allRights')}
                 </span>
+              </li>
+              <li>
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <Shield className="h-3 w-3" />
+                  {t('accessoRedazione')}
+                </Link>
               </li>
             </ul>
           </div>

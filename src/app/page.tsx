@@ -14,10 +14,9 @@ import WeeklyDigestSection from '@/components/magazine/WeeklyDigestSection';
 import ForYouSection from '@/components/magazine/ForYouSection';
 import ContinueReading from '@/components/magazine/ContinueReading';
 import NewArticlesBanner from '@/components/magazine/NewArticlesBanner';
-import AdminPanel from '@/components/admin/AdminPanel';
 
 export default function Home() {
-  const { viewMode, settings, setSettings } = useNexusStore();
+  const { settings, setSettings } = useNexusStore();
 
   // Fetch settings on mount
   useEffect(() => {
@@ -39,22 +38,16 @@ export default function Home() {
       <Header />
 
       <main className="flex-1">
-        {viewMode === 'magazine' ? (
-          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
-            <NewsTicker />
-            <HeroSection />
-            <ContinueReading />
-            <TrendingSection />
-            <WeeklyDigestSection />
-            <ForYouSection />
-            <CategoryBar />
-            <ArticleGrid />
-          </div>
-        ) : (
-          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-            <AdminPanel />
-          </div>
-        )}
+        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
+          <NewsTicker />
+          <HeroSection />
+          <ContinueReading />
+          <TrendingSection />
+          <WeeklyDigestSection />
+          <ForYouSection />
+          <CategoryBar />
+          <ArticleGrid />
+        </div>
       </main>
 
       <NewArticlesBanner />

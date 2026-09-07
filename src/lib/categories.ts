@@ -7,6 +7,34 @@ export interface CategoryMeta {
   accent: string;
 }
 
+export interface CategoryDef {
+  name: string;
+  slug: string;
+  labelKey: string;
+  descKey: string;
+}
+
+/** Canonical category list: DB name, URL slug, i18n label + description keys */
+export const CATEGORY_DEFS: CategoryDef[] = [
+  { name: 'Tecnologia', slug: 'tecnologia', labelKey: 'catTechnology', descKey: 'catDescTechnology' },
+  { name: 'Politica', slug: 'politica', labelKey: 'catPolitics', descKey: 'catDescPolitics' },
+  { name: 'Economia', slug: 'economia', labelKey: 'catEconomy', descKey: 'catDescEconomy' },
+  { name: 'Scienza', slug: 'scienza', labelKey: 'catScience', descKey: 'catDescScience' },
+  { name: 'Sport', slug: 'sport', labelKey: 'catSport', descKey: 'catDescSport' },
+  { name: 'Cultura', slug: 'cultura', labelKey: 'catCulture', descKey: 'catDescCulture' },
+  { name: 'Salute', slug: 'salute', labelKey: 'catHealth', descKey: 'catDescHealth' },
+];
+
+/** URL-safe slug for a DB category name (lowercase, ascii-safe) */
+export function slugForCategory(name: string): string {
+  return (name || '').toLowerCase().trim();
+}
+
+/** Category definition by URL slug */
+export function categoryBySlug(slug: string): CategoryDef | undefined {
+  return CATEGORY_DEFS.find((c) => c.slug === (slug || '').toLowerCase());
+}
+
 export const CATEGORIES = [
   'Tecnologia',
   'Politica',

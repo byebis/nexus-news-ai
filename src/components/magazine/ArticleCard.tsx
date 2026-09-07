@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Clock, User } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { useNexusStore } from '@/lib/store';
 import BookmarkButton from '@/components/magazine/BookmarkButton';
@@ -38,10 +38,10 @@ interface ArticleCardProps {
 }
 
 export default function ArticleCard({ article, index = 0 }: ArticleCardProps) {
-  const router = useRouter();
   const t = useT();
   const { lang } = useLang();
   const categoryName = useCategoryName();
+  const href = `/articolo/${article.id}`;
 
   const categoryLower = article.category?.toLowerCase() || 'tecnologia';
   const badgeClass = CATEGORY_BADGE_COLORS[categoryLower] || CATEGORY_BADGE_COLORS.tecnologia;
@@ -55,9 +55,14 @@ export default function ArticleCard({ article, index = 0 }: ArticleCardProps) {
       exit={{ opacity: 0, y: -10 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
       whileHover={{ y: -4 }}
-      className="group cursor-pointer overflow-hidden rounded-xl border bg-card shadow-sm transition-shadow hover:shadow-lg"
-      onClick={() => router.push(`/articolo/${article.id}`)}
+      className="group relative cursor-pointer overflow-hidden rounded-xl border bg-card shadow-sm transition-shadow hover:shadow-lg"
     >
+      {/* Link reale su tutta la card: navigazione crawlabile (SEO + accessibilità) */}
+      <Link
+        href={href}
+        aria-label={pickTitle(lang, article)}
+        className="absolute inset-0 z-[1] rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      />
       {/* Cover: real photo when available, generative art fallback */}
       <div className="relative h-40 sm:h-48 overflow-hidden">
         <ArticleImage

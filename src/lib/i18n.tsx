@@ -18,6 +18,34 @@ const DICT: Record<string, { it: string; en: string }> = {
   magazineView: { it: 'Vista Magazine', en: 'Magazine View' },
   lightTheme: { it: 'Tema Chiaro', en: 'Light Theme' },
   darkTheme: { it: 'Tema Scuro', en: 'Dark Theme' },
+  menuHome: { it: 'Home', en: 'Home' },
+  menuSections: { it: 'Sezioni', en: 'Sections' },
+  menuServices: { it: 'Servizi', en: 'Services' },
+  accessoRedazione: { it: 'Accesso Redazione', en: 'Newsroom Login' },
+  catArticlesCount: { it: '{n} articoli pubblicati', en: '{n} published articles' },
+  catEmptyBody: {
+    it: 'Nessun articolo in questa sezione per ora. Gli agenti AI stanno lavorando: torna presto.',
+    en: 'No articles in this section yet. The AI agents are working — check back soon.',
+  },
+  loginPageTagline: {
+    it: 'Area riservata alla redazione: gestisci agenti, coda e pubblicazione.',
+    en: 'Newsroom-only area: manage agents, queue and publishing.',
+  },
+  loginSuccessRedirect: { it: 'Accesso effettuato, carico il pannello…', en: 'Signed in, loading the panel…' },
+  loginBackHome: { it: 'Torna al magazine', en: 'Back to the magazine' },
+  loginNoAccount: {
+    it: 'Gli account sono creati dall’amministratore nel tab Utenti.',
+    en: 'Accounts are created by the administrator in the Users tab.',
+  },
+
+  // Category descriptions (hero pagina sezione)
+  catDescTechnology: { it: 'AI, innovazione, startup e il futuro del digitale, raccontati da TechBot.', en: 'AI, innovation, startups and the digital future, covered by TechBot.' },
+  catDescPolitics: { it: 'Palazzo Chigi, Parlamento e gli equilibri politici nazionali ed europei, con PolicyWatch.', en: 'Government, Parliament and national-European political dynamics, with PolicyWatch.' },
+  catDescEconomy: { it: 'Mercati, imprese, lavoro e denaro: le notizie che muovono l’economia, con MarketPulse.', en: 'Markets, business, labour and money: the news that move the economy, with MarketPulse.' },
+  catDescScience: { it: 'Ricerca, spazio, clima e scoperte che cambiano il nostro futuro, con ScienceUp.', en: 'Research, space, climate and discoveries changing our future, with ScienceUp.' },
+  catDescSport: { it: 'Risultati, dietro le quinte e analisi dal mondo dello sport, con SportArena.', en: 'Results, behind the scenes and analysis from the world of sport, with SportArena.' },
+  catDescCulture: { it: 'Cinema, libri, arte, musica e spettacolo: la scena culturale, con CultureHub.', en: 'Cinema, books, art, music and showbiz: the cultural scene, with CultureHub.' },
+  catDescHealth: { it: 'Benessere, medicina e ricerca sanitaria spiegati bene, con VitaSalute.', en: 'Wellbeing, medicine and health research explained well, with VitaSalute.' },
 
   // Hero
   heroWelcomeA: { it: 'Benvenuto su', en: 'Welcome to' },
@@ -53,6 +81,7 @@ const DICT: Record<string, { it: string; en: string }> = {
   catCulture: { it: 'Cultura', en: 'Culture' },
   catHealth: { it: 'Salute', en: 'Health' },
   catBookmarks: { it: 'Da leggere', en: 'Read later' },
+  catBreadcrumbHome: { it: 'Home', en: 'Home' },
 
   // Search / grid toolbar
   searchPlaceholder: { it: 'Cerca negli articoli...', en: 'Search articles...' },

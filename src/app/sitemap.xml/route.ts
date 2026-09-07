@@ -1,4 +1,5 @@
 import { fetchArticles } from '@/lib/api';
+import { CATEGORY_DEFS } from '@/lib/categories';
 
 const SITE_URL = 'https://nexus-news-ai.pages.dev';
 
@@ -10,6 +11,10 @@ export async function GET() {
     const urls = [
       ...staticPages.map(
         (p) => `  <url><loc>${SITE_URL}${p}</loc><changefreq>hourly</changefreq><priority>${p === '' ? '1.0' : '0.3'}</priority></url>`
+      ),
+      // Pagine sezione (/categoria/[slug]) — daily, priority 0.6
+      ...CATEGORY_DEFS.map(
+        (c) => `  <url><loc>${SITE_URL}/categoria/${c.slug}</loc><changefreq>daily</changefreq><priority>0.6</priority></url>`
       ),
       ...articles.map((a) => {
         const lastmod = (a.updatedAt || a.publishedAt || a.createdAt).slice(0, 10);
