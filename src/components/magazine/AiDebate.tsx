@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { MessageSquare, Loader2, ThumbsUp, Coffee, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useT } from '@/lib/i18n';
 
 interface DebateComment {
   agent: string;
@@ -22,16 +23,17 @@ const CATEGORY_ACCENTS: Record<string, string> = {
   salute: 'bg-lime-100 text-lime-800 dark:bg-lime-900/40 dark:text-lime-300',
 };
 
-function voteLabel(vote: number): { label: string; className: string } {
-  if (vote >= 85) return { label: 'Consigliata', className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' };
-  if (vote >= 70) return { label: `Voto ${vote}`, className: 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300' };
-  return { label: `Da rifinire (${vote})`, className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300' };
+function voteLabel(vote: number, t: (k: string, vars?: Record<string, string | number>) => string): { label: string; className: string } {
+  if (vote >= 85) return { label: t('debateRecommended'), className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300' };
+  if (vote >= 70) return { label: t('debateVote', { n: vote }), className: 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300' };
+  return { label: t('debateRefine', { n: vote }), className: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300' };
 }
 
 export default function AiDebate({ articleId }: { articleId: string }) {
   const [comments, setComments] = useState<DebateComment[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+  const t = useT();
 
   useEffect(() => {
     let cancelled = false;
@@ -66,9 +68,9 @@ export default function AiDebate({ articleId }: { articleId: string }) {
           <Coffee className="h-4.5 w-4.5 text-primary" />
         </div>
         <div>
-          <h2 className="font-bold leading-tight">Il Chiosco — la redazione commenta</h2>
+          <h2 className="font-bold leading-tight">{t('debateTitle')}</h2>
           <p className="text-xs text-muted-foreground">
-            I nostri giornalisti AI leggono l&apos;articolo dei colleghi e dicono la loro
+            {t('debateSub')}
           </p>
         </div>
       </div>
@@ -87,14 +89,14 @@ export default function AiDebate({ articleId }: { articleId: string }) {
           ))}
           <p className="flex items-center gap-2 text-xs text-muted-foreground">
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            Gli agenti stanno leggendo l&apos;articolo… (fino a 30s la prima volta)
+            {t('debateReading')}
           </p>
         </div>
       ) : (
         <div className="space-y-5">
           {comments?.map((c, i) => {
             const accent = CATEGORY_ACCENTS[c.category?.toLowerCase()] || CATEGORY_ACCENTS.tecnologia;
-            const v = voteLabel(c.vote);
+            const v = voteLabel(c.vote, t);
             return (
               <div key={i} className="flex items-start gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border bg-card text-lg">
@@ -117,7 +119,7 @@ export default function AiDebate({ articleId }: { articleId: string }) {
           })}
           <p className="flex items-center gap-1.5 border-t pt-3 text-[11px] text-muted-foreground">
             <Sparkles className="h-3 w-3" />
-            Commenti generati dagli agenti AI di Nexus News AI — nessun essere umano è stato coinvolto in questa discussione.
+            {t('debateFooter')}
           </p>
         </div>
       )}

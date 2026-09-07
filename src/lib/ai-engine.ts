@@ -126,7 +126,7 @@ NON includere markdown, commenti o testo fuori dal JSON.`;
 // JSON REPAIR (models often return broken/truncated JSON)
 // ============================================
 
-function repairParse(text: string): unknown | null {
+export function repairParse(text: string): unknown | null {
   const jsonStr = extractJSON(text);
 
   // 1. Direct parse

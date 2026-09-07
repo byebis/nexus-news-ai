@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { Zap } from 'lucide-react';
 import { useNexusStore } from '@/lib/store';
+import { useT } from '@/lib/i18n';
 
 /**
  * Breaking news ticker: scrolls titles of the newest articles.
@@ -10,6 +11,7 @@ import { useNexusStore } from '@/lib/store';
  */
 export default function NewsTicker() {
   const { articles } = useNexusStore();
+  const t = useT();
 
   const items = useMemo(() => {
     const sorted = [...articles].sort(
@@ -26,8 +28,8 @@ export default function NewsTicker() {
     <div className="relative flex items-stretch overflow-hidden rounded-xl border bg-card h-10">
       <div className="z-10 flex items-center gap-1.5 bg-red-600 text-white px-3 shrink-0">
         <Zap className="h-3.5 w-3.5 animate-pulse" />
-        <span className="text-xs font-bold uppercase tracking-wide hidden sm:inline">Ultim&apos;ora</span>
-        <span className="text-xs font-bold uppercase sm:hidden">Flash</span>
+        <span className="text-xs font-bold uppercase tracking-wide hidden sm:inline">{t('breaking')}</span>
+        <span className="text-xs font-bold uppercase sm:hidden">{t('flash')}</span>
       </div>
       <div className="relative flex-1 overflow-hidden">
         <div className="absolute inset-0 flex items-center ticker-scroll whitespace-nowrap">

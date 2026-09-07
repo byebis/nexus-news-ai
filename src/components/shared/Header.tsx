@@ -3,17 +3,40 @@
 import { useState } from 'react';
 import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Sun, Moon, Menu, X, Zap } from 'lucide-react';
+import { Shield, Sun, Moon, Menu, X, Zap, Languages } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNexusStore } from '@/lib/store';
+import { useT, useLang } from '@/lib/i18n';
 
 export default function Header() {
   const { theme, setTheme } = useTheme();
   const { viewMode, setViewMode, settings } = useNexusStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const t = useT();
+  const { lang, setLang } = useLang();
 
   const siteName = settings?.siteName || 'NEXUS NEWS AI';
-  const tagline = settings?.siteTagline || 'Il futuro dell\'informazione, guidato dall\'intelligenza artificiale';
+  const tagline = settings?.siteTagline
+    || (lang === 'en'
+      ? 'The future of news, powered by artificial intelligence'
+      : 'Il futuro dell\'informazione, guidato dall\'intelligenza artificiale');
+
+  const LangToggle = ({ full = false }: { full?: boolean }) => (
+    <button
+      onClick={() => setLang(lang === 'it' ? 'en' : 'it')}
+      aria-label={lang === 'it' ? 'Switch to English' : 'Passa all\'italiano'}
+      className={
+        full
+          ? 'flex w-full items-center justify-start gap-2 rounded-md border px-3 py-2 text-sm transition-colors hover:bg-muted'
+          : 'flex items-center gap-1.5 rounded-full border bg-muted/50 px-2.5 py-1.5 text-xs font-semibold transition-colors hover:bg-muted'
+      }
+    >
+      <Languages className={full ? 'h-4 w-4' : 'h-3.5 w-3.5'} />
+      <span className={lang === 'it' ? 'opacity-40' : ''}>IT</span>
+      <span className="opacity-40">/</span>
+      <span className={lang === 'en' ? 'opacity-40' : ''}>EN</span>
+    </button>
+  );
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
@@ -45,8 +68,10 @@ export default function Header() {
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
             </span>
-            AI Attivo
+            {t('aiActive')}
           </motion.div>
+
+          <LangToggle />
 
           <Button
             variant={viewMode === 'admin' ? 'default' : 'ghost'}
@@ -55,7 +80,7 @@ export default function Header() {
             className="gap-2"
           >
             <Shield className="h-4 w-4" />
-            {viewMode === 'admin' ? 'Magazine' : 'Admin'}
+            {viewMode === 'admin' ? t('magazineBtn') : t('adminBtn')}
           </Button>
 
           <Button
@@ -118,8 +143,9 @@ export default function Header() {
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                 </span>
-                AI Attivo
+                {t('aiActive')}
               </div>
+              <LangToggle full />
               <Button
                 variant={viewMode === 'admin' ? 'default' : 'outline'}
                 className="w-full justify-start gap-2"
@@ -129,7 +155,7 @@ export default function Header() {
                 }}
               >
                 <Shield className="h-4 w-4" />
-                {viewMode === 'admin' ? 'Vista Magazine' : 'Pannello Admin'}
+                {viewMode === 'admin' ? t('magazineView') : t('adminPanel')}
               </Button>
               <Button
                 variant="outline"
@@ -140,7 +166,7 @@ export default function Header() {
                 }}
               >
                 {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                {theme === 'dark' ? 'Tema Chiaro' : 'Tema Scuro'}
+                {theme === 'dark' ? t('lightTheme') : t('darkTheme')}
               </Button>
             </div>
           </motion.div>

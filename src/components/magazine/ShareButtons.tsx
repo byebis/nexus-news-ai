@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Share2, Check, Link2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useT } from '@/lib/i18n';
 
 interface Props {
   title: string;
@@ -11,6 +12,7 @@ interface Props {
 
 export function ShareButtons({ title }: Props) {
   const { toast } = useToast();
+  const t = useT();
   const [copied, setCopied] = useState(false);
 
   const url = typeof window !== 'undefined' ? window.location.href : '';
@@ -26,9 +28,9 @@ export function ShareButtons({ title }: Props) {
       await navigator.clipboard.writeText(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-      toast({ title: 'Link copiato', description: 'Il link dell\u2019articolo è negli appunti' });
+      toast({ title: t('linkCopied'), description: t('linkCopiedBody') });
     } catch {
-      toast({ title: 'Errore', description: 'Impossibile copiare il link', variant: 'destructive' });
+      toast({ title: t('shareError'), description: t('shareErrorBody'), variant: 'destructive' });
     }
   };
 

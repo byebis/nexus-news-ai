@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pause, Play, Square, Type, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useT, useLang } from '@/lib/i18n';
 
 interface Props {
   /** Plain text of the article, used for speech synthesis */
@@ -26,6 +27,10 @@ const SIZES = [
  */
 export default function ReaderShell({ text, children }: Props) {
   const { toast } = useToast();
+  const t = useT();
+  const { lang } = useLang();
+  const voiceLang = lang === 'en' ? 'en-US' : 'it-IT';
+  const voicePrefix = lang === 'en' ? 'en' : 'it';
   const bodyRef = useRef<HTMLDivElement>(null);
   const [sizeIdx, setSizeIdx] = useState(1);
   const [scrollPct, setScrollPct] = useState(0);
@@ -77,11 +82,11 @@ export default function ReaderShell({ text, children }: Props) {
     try {
       window.speechSynthesis.cancel();
       const voices = window.speechSynthesis.getVoices();
-      const itVoice = voices.find((v) => v.lang?.toLowerCase().startsWith('it'));
+      const itVoice = voices.find((v) => v.lang?.toLowerCase().startsWith(voicePrefix));
       const rate = RATES[rateIdx];
       const queue = sentences.map((s, i) => {
         const u = new SpeechSynthesisUtterance(s);
-        u.lang = 'it-IT';
+        u.lang = voiceLang;
         if (itVoice) u.voice = itVoice;
         u.rate = rate;
         u.pitch = 1;
@@ -106,17 +111,17 @@ export default function ReaderShell({ text, children }: Props) {
           if (speakingRef.current && !window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
             stopSpeech();
             toast({
-              title: 'Voce non disponibile qui',
-              description: 'Questo browser/ambiente non espone voci vocali. Prova da Chrome, Edge o Safari desktop/mobile.',
+              title: t('ttsUnavailableHere'),
+              description: t('ttsUnavailableHereBody'),
               variant: 'destructive',
             });
           }
         } catch { /* noop */ }
       }, 1200);
     } catch {
-      toast({ title: 'Voce non disponibile', description: 'Il browser non supporta la sintesi vocale', variant: 'destructive' });
+      toast({ title: t('ttsUnavailable'), description: t('ttsUnsupported'), variant: 'destructive' });
     }
-  }, [sentences, rateIdx, stopSpeech, toast]);
+  }, [sentences, rateIdx, stopSpeech, toast, t, voiceLang, voicePrefix]);
 
   const togglePause = useCallback(() => {
     try {
@@ -180,7 +185,7 @@ export default function ReaderShell({ text, children }: Props) {
               aria-label="Ascolta l'articolo"
             >
               <Volume2 className="h-4 w-4 text-teal-500" />
-              <span className="text-xs font-medium">Ascolta</span>
+              <span className="text-xs font-medium">{t('listen')}</span>
             </Button>
           ) : (
             <>
@@ -215,12 +220,12 @@ export default function ReaderShell({ text, children }: Props) {
                     try { window.speechSynthesis.cancel(); } catch { /* noop */ }
                     setTimeout(() => {
                       const voices = window.speechSynthesis.getVoices();
-                      const itVoice = voices.find((v) => v.lang?.toLowerCase().startsWith('it'));
+                      const itVoice = voices.find((v) => v.lang?.toLowerCase().startsWith(voicePrefix));
                       const rate = RATES[next];
                       setSpeaking(true); setPaused(false);
                       for (let i = idxRef.current; i < sentences.length; i++) {
                         const u = new SpeechSynthesisUtterance(sentences[i]);
-                        u.lang = 'it-IT';
+                        u.lang = voiceLang;
                         if (itVoice) u.voice = itVoice;
                         u.rate = rate;
                         u.onend = () => {

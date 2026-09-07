@@ -8,7 +8,14 @@ import { ShareButtons } from '@/components/magazine/ShareButtons';
 import BookmarkButton from '@/components/magazine/BookmarkButton';
 import ViewTracker from '@/components/magazine/ViewTracker';
 import AiDebate from '@/components/magazine/AiDebate';
-import ReaderShell from '@/components/magazine/ReaderShell';
+import {
+  TranslatableHeadline,
+  ArticleBodyClient,
+  CategoryBadgeLabel,
+  RelatedHeading,
+  SourceNote,
+} from '@/components/magazine/ArticleTranslation';
+import { T, LDate } from '@/lib/i18n';
 import { ArrowLeft, Clock, ShieldCheck, User, Eye } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import ArticleCard from '@/components/magazine/ArticleCard';
@@ -55,15 +62,6 @@ export default async function ArticlePage({ params }: Props) {
   const views = await getArticleViews(article.id);
 
   const meta = CATEGORY_META[article.category] || CATEGORY_META.default;
-  const dateStr = new Date(article.publishedAt || article.createdAt).toLocaleDateString('it-IT', {
-    day: 'numeric', month: 'long', year: 'numeric',
-  });
-  const paragraphs = (article.content || '').split(/\n+/).filter((p) => p.trim().length > 0);
-  const plainText = [
-    article.title,
-    article.subtitle || '',
-    article.content || article.summary || '',
-  ].join('. ').replace(/\s+/g, ' ').trim();
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -81,27 +79,22 @@ export default async function ArticlePage({ params }: Props) {
                   href="/"
                   className="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <ArrowLeft className="h-4 w-4" /> Torna al magazine
+                  <ArrowLeft className="h-4 w-4" /> <T k="backToMagazine" />
                 </Link>
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge className={meta.badgeClass} variant="secondary">
-                    <span className="mr-1">{meta.emoji}</span>{article.category}
+                    <span className="mr-1">{meta.emoji}</span><CategoryBadgeLabel category={article.category} />
                   </Badge>
                   <Badge variant="outline" className="gap-1">
-                    <ShieldCheck className="h-3 w-3 text-emerald-500" /> Qualità {article.qualityScore}%
+                    <ShieldCheck className="h-3 w-3 text-emerald-500" /> <T k="quality" /> {article.qualityScore}%
                   </Badge>
                   {views > 0 && (
                     <Badge variant="outline" className="gap-1">
-                      <Eye className="h-3 w-3 text-orange-500" /> {views} letture
+                      <Eye className="h-3 w-3 text-orange-500" /> {views} <T k="reads" />
                     </Badge>
                   )}
                 </div>
-                <h1 className="mt-3 text-3xl md:text-5xl font-extrabold tracking-tight leading-tight">
-                  {article.title}
-                </h1>
-                {article.subtitle && (
-                  <p className="mt-3 text-lg text-muted-foreground">{article.subtitle}</p>
-                )}
+                <TranslatableHeadline article={article} />
               </div>
             </div>
           </div>
@@ -115,11 +108,11 @@ export default async function ArticlePage({ params }: Props) {
                   <span className="font-medium text-foreground">{article.agent?.name || 'AI Agent'}</span>
                 </span>
                 <span>·</span>
-                <span>{dateStr}</span>
+                <span><LDate date={article.publishedAt || article.createdAt} /></span>
                 <span>·</span>
-                <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {article.readTime} min</span>
+                <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {article.readTime} <T k="minRead" /></span>
                 <span>·</span>
-                <span className="flex items-center gap-1"><Eye className="h-3.5 w-3.5" /> {views} letture</span>
+                <span className="flex items-center gap-1"><Eye className="h-3.5 w-3.5" /> {views} <T k="reads" /></span>
               </div>
               <div className="flex items-center gap-2">
                 <BookmarkButton articleId={article.id} />
@@ -127,19 +120,8 @@ export default async function ArticlePage({ params }: Props) {
               </div>
             </div>
 
-            <ReaderShell text={plainText}>
-              <div className="py-8 space-y-6 leading-relaxed">
-                {paragraphs.length > 0 ? (
-                  paragraphs.map((p, i) => (
-                    <p key={i} className={i === 0 ? 'text-[1.25em] font-medium text-foreground/90 first-letter:text-5xl first-letter:font-extrabold first-letter:mr-2 first-letter:float-left first-letter:leading-[0.9]' : ''}>
-                      {p}
-                    </p>
-                  ))
-                ) : (
-                  <p className="text-muted-foreground">{article.summary}</p>
-                )}
-              </div>
-            </ReaderShell>
+            {/* IT/EN switch + article body with reader tools */}
+            <ArticleBodyClient article={article} />
 
             {/* Il Chiosco — dibattito AI sulla pagina */}
             <AiDebate articleId={article.id} />
@@ -147,7 +129,7 @@ export default async function ArticlePage({ params }: Props) {
             {/* Source attribution */}
             {article.sourceUrl && (
               <div className="my-8 rounded-xl border bg-muted/40 p-4 text-sm">
-                <span className="font-medium">Fonte originale: </span>
+                <span className="font-medium"><T k="originalSource" /> </span>
                 <a
                   href={article.sourceUrl}
                   target="_blank"
@@ -157,7 +139,7 @@ export default async function ArticlePage({ params }: Props) {
                   {article.sourceName || article.sourceUrl}
                 </a>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Articolo riscritto e rielaborato da {article.agent?.name || 'agente AI'} di Nexus News AI con un point of view editoriale originale.
+                  <SourceNote agentName={article.agent?.name || 'agente AI'} />
                 </p>
               </div>
             )}
@@ -167,7 +149,7 @@ export default async function ArticlePage({ params }: Props) {
         {/* Related */}
         {related.length > 0 && (
           <section className="mx-auto max-w-6xl px-4 py-12 border-t">
-            <h2 className="text-2xl font-bold mb-6">Altri articoli di {article.category}</h2>
+            <h2 className="text-2xl font-bold mb-6"><RelatedHeading category={article.category} /></h2>
             <div className="grid gap-6 md:grid-cols-3">
               {related.map((a) => (
                 <ArticleCard key={a.id} article={a} />

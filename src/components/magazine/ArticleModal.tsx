@@ -21,6 +21,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useNexusStore } from '@/lib/store';
+import { useT, useLang, useCategoryName, pickTitle, pickSubtitle, LDate } from '@/lib/i18n';
 
 const CATEGORY_BADGE_COLORS: Record<string, string> = {
   tecnologia: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/40 dark:text-cyan-300',
@@ -50,6 +51,9 @@ const PLATFORM_LABELS: Record<string, string> = {
 
 export default function ArticleModal() {
   const { selectedArticle, setSelectedArticle } = useNexusStore();
+  const t = useT();
+  const { lang } = useLang();
+  const categoryName = useCategoryName();
 
   if (!selectedArticle) return null;
 
@@ -69,18 +73,18 @@ export default function ArticleModal() {
         <DialogHeader className="p-6 pb-0">
           <div className="flex items-center gap-2 mb-2">
             <Badge className={`${badgeClass} border-0 text-xs`}>
-              {selectedArticle.category}
+              {categoryName(selectedArticle.category)}
             </Badge>
             <span className="text-xs text-muted-foreground">
-              Qualità: {selectedArticle.qualityScore}%
+              {t('qualityLabel')} {selectedArticle.qualityScore}%
             </span>
           </div>
           <DialogTitle className="text-xl sm:text-2xl leading-tight">
-            {selectedArticle.title}
+            {pickTitle(lang, selectedArticle)}
           </DialogTitle>
           {selectedArticle.subtitle && (
             <DialogDescription className="text-sm mt-1">
-              {selectedArticle.subtitle}
+              {pickSubtitle(lang, selectedArticle)}
             </DialogDescription>
           )}
         </DialogHeader>
@@ -96,17 +100,13 @@ export default function ArticleModal() {
           </div>
           <div className="flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5" />
-            <span>{selectedArticle.readTime} min di lettura</span>
+            <span>{selectedArticle.readTime} {t('minReadLong')}</span>
           </div>
           {selectedArticle.publishedAt && (
             <div className="flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5" />
               <span>
-                {new Date(selectedArticle.publishedAt).toLocaleDateString('it-IT', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
+                <LDate date={selectedArticle.publishedAt} />
               </span>
             </div>
           )}
@@ -129,11 +129,16 @@ export default function ArticleModal() {
 
           {/* Full page CTA */}
           <Separator className="my-4" />
+          {selectedArticle.titleEn && (
+            <p className="mb-2 inline-flex max-w-full items-center gap-1 truncate rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-medium text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">
+              EN · {selectedArticle.titleEn}
+            </p>
+          )}
           <a
             href={`/articolo/${selectedArticle.id}`}
             className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline underline-offset-4"
           >
-            Leggi la pagina completa con condivisione e articoli correlati
+            {t('openFullPage')}
             <ExternalLink className="h-3.5 w-3.5" />
           </a>
 
@@ -142,7 +147,7 @@ export default function ArticleModal() {
             <>
               <Separator className="my-4" />
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <span>Fonte:</span>
+                <span>{t('source')}</span>
                 <a
                   href={selectedArticle.sourceUrl}
                   target="_blank"
@@ -162,7 +167,7 @@ export default function ArticleModal() {
               <Separator className="my-4" />
               <div>
                 <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-                  Stato Pubblicazione
+                  {t('publishingStatus')}
                 </h4>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {selectedArticle.publishLogs.map((log) => (
@@ -181,12 +186,12 @@ export default function ArticleModal() {
                           {log.status === 'published' ? (
                             <>
                               <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                              <span className="text-emerald-600 dark:text-emerald-400">Pubblicato</span>
+                              <span className="text-emerald-600 dark:text-emerald-400">{t('published')}</span>
                             </>
                           ) : (
                             <>
                               <XCircle className="h-3 w-3 text-red-500" />
-                              <span className="text-red-600 dark:text-red-400">Fallito</span>
+                              <span className="text-red-600 dark:text-red-400">{t('failed')}</span>
                             </>
                           )}
                         </div>

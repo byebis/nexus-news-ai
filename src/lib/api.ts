@@ -772,3 +772,357 @@ export async function createActivityLog(agentId: string, action: string, detail:
   if (error) console.error('createActivityLog error:', error);
   return toActivityLog(data);
 }
+
+// ============================================
+// LEVEL UP 5 — TRANSLATIONS (EN edition)
+// ============================================
+
+export interface TranslationResult {
+  titleEn: string | null;
+  subtitleEn: string | null;
+  summaryEn: string | null;
+  contentEn: string | null;
+  cached: boolean;
+}
+
+/** Translate an article to English via LLM; cached in DB forever. */
+export async function translateArticle(articleId: string): Promise<TranslationResult> {
+  const { data: row } = await supabase
+    .from('articles')
+    .select('id, title, subtitle, summary, content, title_en, subtitle_en, summary_en, content_en, status')
+    .eq('id', articleId)
+    .single();
+
+  if (!row) throw new Error('Articolo non trovato');
+  if (row.status === 'pending_approval' || row.status === 'rejected') {
+    throw new Error('Articolo non pubblicabile');
+  }
+
+  // Cached?
+  if (row.content_en) {
+    return {
+      titleEn: row.title_en || null,
+      subtitleEn: row.subtitle_en || null,
+      summaryEn: row.summary_en || null,
+      contentEn: row.content_en,
+      cached: true,
+    };
+  }
+
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey || apiKey.length < 10) {
+    throw new Error('API key OpenRouter non configurata');
+  }
+
+  const prompt = `Translate this Italian news article into English for an international audience.
+Keep the journalistic tone, the agent's voice and all facts. Do not add new facts.
+
+- TITLE: ${row.title}
+- SUBTITLE: ${row.subtitle || ''}
+- SUMMARY: ${row.summary}
+- CONTENT:
+${(row.content || '').slice(0, 6000)}
+
+Return ONLY a valid JSON object with this exact structure:
+{
+  "title": "English title",
+  "subtitle": "English subtitle (empty string if none)",
+  "summary": "English summary",
+  "content": "Full English article, same paragraphs separated by \\n\\n"
+}
+
+Do NOT include markdown, comments or text outside the JSON.`;
+
+  const { chatWithFallback } = await import('@/lib/openrouter');
+  const { repairParse } = await import('@/lib/ai-engine');
+  const result = await chatWithFallback([{ role: 'user', content: prompt }], 'translate', apiKey);
+  if (!result.success || !result.response) {
+    throw new Error(
+      'Traduzione fallita: tutti i modelli hanno risposto errore. ' +
+      result.errors.map((e) => `${e.model}: ${e.error.slice(0, 80)}`).join(' | ')
+    );
+  }
+
+  const parsed = repairParse(result.response.content) as Record<string, string> | null;
+  if (!parsed || !parsed.title || !parsed.content) {
+    throw new Error('Risposta traduzione non valida dal modello ' + result.response.model);
+  }
+
+  const now = new Date().toISOString();
+  await supabase
+    .from('articles')
+    .update({
+      title_en: parsed.title,
+      subtitle_en: parsed.subtitle || '',
+      summary_en: parsed.summary || '',
+      content_en: parsed.content,
+      translated_at: now,
+    })
+    .eq('id', articleId);
+
+  return {
+    titleEn: parsed.title,
+    subtitleEn: parsed.subtitle || '',
+    summaryEn: parsed.summary || '',
+    contentEn: parsed.content,
+    cached: false,
+  };
+}
+
+// ============================================
+// LEVEL UP 5 — WEEKLY DIGESTS (newsroom threads)
+// ============================================
+
+function getWeekStartISO(offsetWeeks = 0): string {
+  const d = new Date();
+  const day = d.getUTCDay(); // 0 = Sunday
+  const diffToMonday = day === 0 ? 6 : day - 1;
+  d.setUTCDate(d.getUTCDate() - diffToMonday + offsetWeeks * 7);
+  d.setUTCHours(0, 0, 0, 0);
+  return d.toISOString().slice(0, 10);
+}
+
+export async function fetchWeeklyDigests(weekStart?: string) {
+  let query = supabase
+    .from('weekly_digests')
+    .select('*, agent:agents(id, name, avatar, category)')
+    .order('created_at', { ascending: false });
+  if (weekStart) query = query.eq('week_start', weekStart);
+  const { data, error } = await query;
+  if (error) console.error('fetchWeeklyDigests error:', error);
+  return (data || []).map((r) => toCamelCase(r)) as unknown as import('@/lib/store').WeeklyDigest[];
+}
+
+export interface DigestAgentRow {
+  id: string;
+  name: string;
+  avatar: string;
+  category: string;
+  weekCount: number;
+}
+
+export async function fetchDigestAgents(): Promise<DigestAgentRow[]> {
+  const weekStart = getWeekStartISO();
+  const { data: agents } = await supabase
+    .from('agents')
+    .select('id, name, avatar, category')
+    .neq('id', 'sys-redazione')
+    .order('created_at', { ascending: true });
+
+  const { data: counts, error } = await supabase
+    .from('articles')
+    .select('agent_id, id')
+    .eq('status', 'published')
+    .gte('published_at', `${weekStart}T00:00:00Z`);
+  if (error) console.error('fetchDigestAgents count error:', error);
+
+  const perAgent = new Map<string, number>();
+  for (const a of counts || []) {
+    perAgent.set((a as { agent_id: string }).agent_id, (perAgent.get((a as { agent_id: string }).agent_id) || 0) + 1);
+  }
+
+  return (agents || []).map((a) => ({
+    id: (a as { id: string }).id,
+    name: (a as { name: string }).name,
+    avatar: (a as { avatar: string }).avatar,
+    category: (a as { category: string }).category,
+    weekCount: perAgent.get((a as { id: string }).id) || 0,
+  }));
+}
+
+/** Generate (or regenerate) the weekly thread digest for one agent. */
+export async function generateWeeklyDigest(agentId: string) {
+  const { data: agent } = await supabase
+    .from('agents')
+    .select('id, name, avatar, category, personality')
+    .eq('id', agentId)
+    .single();
+  if (!agent) throw new Error('Agente non trovato');
+
+  const weekStart = getWeekStartISO();
+  const { data: articles } = await supabase
+    .from('articles')
+    .select('title, summary, category, quality_score, published_at')
+    .eq('agent_id', agentId)
+    .eq('status', 'published')
+    .gte('published_at', `${weekStart}T00:00:00Z`)
+    .order('published_at', { ascending: true });
+
+  if (!articles || articles.length === 0) {
+    throw new Error(`Nessun articolo pubblicato questa settimana per ${agent.name}. Genera prima qualche articolo.`);
+  }
+
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey || apiKey.length < 10) {
+    throw new Error('API key OpenRouter non configurata');
+  }
+
+  const list = articles
+    .map((a, i) => `${i + 1}. ${(a as { title: string }).title} — ${(a as { summary: string }).summary?.slice(0, 200)}`)
+    .join('\n');
+
+  const prompt = `Sei ${agent.name}, giornalista AI di Nexus News AI specializzato in ${agent.category}. Personalità: "${agent.personality}".
+
+Questa settimana hai pubblicato ${articles.length} articoli. Ecco i titoli e i riassunti:
+
+${list}
+
+Il tuo compito: scrivi un THREAD EDITORIALE di fine settimana (stile thread social: da 4 a 6 post brevi e incisivi, ognuno max 280 caratteri) che riassuma la tua settimana: apertura d'impatto, i temi chiave, un'osservazione originale, chiusura con invito a leggere gli articoli.
+
+Rispondi ESATTAMENTE in questo formato a righe, senza markdown e senza il simbolo # :
+TITLE: titolo del thread (max 80 caratteri, es. La settimana di ${agent.name}: ...)
+POST: primo post
+POST: secondo post
+POST: terzo post
+POST: quarto post
+
+Ogni riga POST inizia con "POST: ". Nessun altro testo fuori dalle righe TITLE/POST.`;
+
+  const { chatWithFallback } = await import('@/lib/openrouter');
+  const { repairParse } = await import('@/lib/ai-engine');
+  const result = await chatWithFallback([{ role: 'user', content: prompt }], 'digest', apiKey);
+  if (!result.success || !result.response) {
+    throw new Error(
+      'Generazione digest fallita: ' +
+      result.errors.map((e) => `${e.model}: ${e.error.slice(0, 80)}`).join(' | ')
+    );
+  }
+
+  const raw = result.response.content.replace(/<think>[\s\S]*?<\/think>/gi, '');
+  // Parse line-based TITLE:/POST: format (robust), fallback to JSON repairParse
+  let title = '';
+  let posts: string[] = [];
+  const titleMatch = raw.match(/^\s*TITLE\s*:\s*(.+)$/im);
+  if (titleMatch) {
+    title = titleMatch[1].trim().replace(/^["']|["']$/g, '');
+    const postRegex = /^\s*POST\s*\d*\s*:\s*(.+)$/gim;
+    let m: RegExpExecArray | null;
+    while ((m = postRegex.exec(raw)) !== null) {
+      const p = m[1].trim();
+      if (p && p.length > 3) posts.push(p);
+    }
+  }
+  if (!title || posts.length === 0) {
+    const parsed = repairParse(raw) as { title?: string; posts?: string[]; content?: string } | null;
+    if (parsed?.title) title = parsed.title;
+    if (Array.isArray(parsed?.posts) && parsed.posts.length > 0) {
+      posts = parsed.posts.filter((p) => typeof p === 'string' && p.length > 3);
+    } else if (parsed?.content && typeof parsed.content === 'string') {
+      posts = parsed.content.split(/\n\n+/).filter((p) => p.trim().length > 3);
+    }
+  }
+  if (!title || posts.length === 0) {
+    throw new Error('Risposta digest non valida dal modello ' + result.response.model);
+  }
+
+  const content = posts.join('\n\n');
+  const agentTag = agentId.split('-').pop() || agentId; // last UUID segment (unique across agents)
+  const id = `dig_${agentTag.slice(0, 12)}_${weekStart}`;
+
+  // Upsert (unique on agent_id + week_start)
+  const { error } = await supabase
+    .from('weekly_digests')
+    .upsert(
+      {
+        id,
+        agent_id: agentId,
+        week_start: weekStart,
+        title,
+        content,
+        article_count: articles.length,
+      },
+      { onConflict: 'agent_id,week_start' }
+    );
+  if (error) throw new Error('Salvataggio digest fallito: ' + error.message);
+
+  await supabase.from('activity_logs').insert({
+    agent_id: agentId,
+    action: 'digest',
+    detail: `Digest settimanale generato: "${title}" (${articles.length} articoli, ${posts.length} post)`,
+    status: 'success',
+  });
+
+  const digest = {
+    id,
+    agentId,
+    weekStart,
+    title,
+    content,
+    articleCount: articles.length,
+    sentChannels: '',
+    createdAt: new Date().toISOString(),
+    agent,
+  };
+  return digest;
+}
+
+/** Send a weekly digest to Telegram as a multi-message thread. */
+export async function sendDigestTelegram(digestId: string) {
+  const { data: digest } = await supabase
+    .from('weekly_digests')
+    .select('*')
+    .eq('id', digestId)
+    .single();
+  if (!digest) throw new Error('Digest non trovato');
+
+  const { data: ch } = await supabase
+    .from('channel_configs')
+    .select('*')
+    .eq('channel', 'telegram')
+    .single();
+
+  const cfg = (ch?.config as Record<string, string>) || {};
+  if (!ch?.enabled || !cfg.bot_token || !cfg.chat_id) {
+    throw new Error('Canale Telegram non configurato: attivalo in Impostazioni → Canali con bot_token e chat_id.');
+  }
+
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const posts = String(digest.content || '').split(/\n\n+/).filter(Boolean);
+  const messages: string[] = [
+    `🧵 <b>${esc(digest.title)}</b>\n\n<i>Il Digest della Redazione · Nexus News AI</i>`,
+    ...posts.map((p, i) => `${i + 1}/${posts.length}\n\n${esc(p)}`),
+    `📡 Segui il magazine: ${SITE_URL}`,
+  ];
+
+  let sent = 0;
+  for (const text of messages) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12_000);
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${cfg.bot_token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: cfg.chat_id,
+          text,
+          parse_mode: 'HTML',
+          disable_web_page_preview: true,
+        }),
+        signal: controller.signal,
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) {
+        throw new Error(`Telegram: ${data?.description || `HTTP ${res.status}`} (inviati ${sent}/${messages.length})`);
+      }
+      sent++;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  const channels = String(digest.sent_channels || '').split(',').filter(Boolean);
+  if (!channels.includes('telegram')) channels.push('telegram');
+  await supabase
+    .from('weekly_digests')
+    .update({ sent_channels: channels.join(',') })
+    .eq('id', digestId);
+
+  await supabase.from('activity_logs').insert({
+    agent_id: digest.agent_id,
+    action: 'digest',
+    detail: `Digest "${digest.title}" inviato su Telegram (${messages.length} messaggi)`,
+    status: 'success',
+  });
+
+  return { sent: messages.length };
+}

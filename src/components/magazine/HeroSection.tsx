@@ -1,22 +1,14 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Clock, ArrowRight, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNexusStore } from '@/lib/store';
+import { ArticleCover } from '@/components/magazine/ArticleCover';
+import { useT, useLang, useCategoryName, LDate, pickTitle, pickSubtitle } from '@/lib/i18n';
 import type { Article } from '@/lib/store';
-
-const CATEGORY_COLORS: Record<string, string> = {
-  tecnologia: 'from-cyan-500 to-teal-500',
-  politica: 'from-amber-500 to-orange-500',
-  economia: 'from-emerald-500 to-green-500',
-  scienza: 'from-violet-500 to-purple-500',
-  sport: 'from-red-500 to-rose-500',
-  cultura: 'from-pink-500 to-fuchsia-500',
-  salute: 'from-lime-500 to-green-500',
-};
 
 const CATEGORY_BADGE_COLORS: Record<string, string> = {
   tecnologia: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/40 dark:text-cyan-300',
@@ -30,6 +22,12 @@ const CATEGORY_BADGE_COLORS: Record<string, string> = {
 
 export default function HeroSection() {
   const { articles, setSelectedArticle } = useNexusStore();
+  const t = useT();
+  const { lang } = useLang();
+  const categoryName = useCategoryName();
+  // Avoid hydration mismatch on the LDate (locale depends on client storage)
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // Get the latest published article
   const featured: Article | null = articles.length > 0
@@ -45,13 +43,13 @@ export default function HeroSection() {
           className="text-center"
         >
           <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">
-            Benvenuto su{' '}
+            {t('heroWelcomeA')}{' '}
             <span className="bg-gradient-to-r from-rose-500 to-orange-500 bg-clip-text text-transparent">
               Nexus News AI
             </span>
           </h2>
           <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
-            I nostri agenti AI stanno raccogliendo le ultime notizie. I primi articoli appariranno qui a breve.
+            {t('heroEmpty')}
           </p>
         </motion.div>
       </section>
@@ -59,7 +57,6 @@ export default function HeroSection() {
   }
 
   const categoryLower = featured.category?.toLowerCase() || 'tecnologia';
-  const gradientClass = CATEGORY_COLORS[categoryLower] || CATEGORY_COLORS.tecnologia;
   const badgeClass = CATEGORY_BADGE_COLORS[categoryLower] || CATEGORY_BADGE_COLORS.tecnologia;
 
   return (
@@ -67,9 +64,13 @@ export default function HeroSection() {
       className="group relative overflow-hidden rounded-2xl cursor-pointer"
       onClick={() => setSelectedArticle(featured)}
     >
-      {/* Animated gradient background */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass} opacity-90`} />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+      {/* Generative cover art of the featured article */}
+      <ArticleCover
+        category={featured.category}
+        seed={featured.id}
+        className="absolute inset-0 h-full w-full"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/10" />
 
       {/* Decorative elements */}
       <motion.div
@@ -98,16 +99,16 @@ export default function HeroSection() {
           className="space-y-4 max-w-2xl"
         >
           <Badge className={`${badgeClass} border-0 font-medium`}>
-            {featured.category}
+            {categoryName(featured.category)}
           </Badge>
 
           <h2 className="text-2xl font-bold leading-tight text-white sm:text-3xl lg:text-4xl line-clamp-3">
-            {featured.title}
+            {pickTitle(lang, featured)}
           </h2>
 
           {featured.subtitle && (
             <p className="text-sm text-white/80 line-clamp-2 sm:text-base">
-              {featured.subtitle}
+              {pickSubtitle(lang, featured)}
             </p>
           )}
 
@@ -118,15 +119,11 @@ export default function HeroSection() {
             </div>
             <div className="flex items-center gap-1.5">
               <Clock className="h-3.5 w-3.5" />
-              <span>{featured.readTime} min di lettura</span>
+              <span>{featured.readTime} {t('minReadLong')}</span>
             </div>
-            {featured.publishedAt && (
+            {featured.publishedAt && mounted && (
               <span>
-                {new Date(featured.publishedAt).toLocaleDateString('it-IT', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
+                <LDate date={featured.publishedAt} />
               </span>
             )}
           </div>
@@ -140,7 +137,7 @@ export default function HeroSection() {
                 setSelectedArticle(featured);
               }}
             >
-              Leggi di più
+              {t('readMore')}
               <ArrowRight className="h-4 w-4" />
             </Button>
           </motion.div>

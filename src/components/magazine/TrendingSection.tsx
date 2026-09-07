@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Flame, Eye } from 'lucide-react';
+import { useT } from '@/lib/i18n';
 
 interface TrendingItem {
   id: string;
@@ -13,6 +14,7 @@ interface TrendingItem {
 
 export default function TrendingSection() {
   const [items, setItems] = useState<TrendingItem[] | null>(null);
+  const t = useT();
 
   useEffect(() => {
     let cancelled = false;
@@ -39,8 +41,8 @@ export default function TrendingSection() {
         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-950/50">
           <Flame className="h-4 w-4 text-orange-600 dark:text-orange-400" />
         </div>
-        <h2 className="text-sm font-bold uppercase tracking-wide">Trending ora</h2>
-        <span className="text-xs text-muted-foreground">· le letture del pubblico</span>
+        <h2 className="text-sm font-bold uppercase tracking-wide">{t('trendingNow')}</h2>
+        <span className="text-xs text-muted-foreground">{t('trendingSub')}</span>
       </div>
 
       {items === null ? (
@@ -65,7 +67,7 @@ export default function TrendingSection() {
                   {item.title}
                 </p>
                 <p className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
-                  <Eye className="h-3 w-3" /> {item.views} letture · {item.category}
+                  <Eye className="h-3 w-3" /> {item.views} {t('reads')} · {item.category}
                 </p>
               </div>
             </Link>

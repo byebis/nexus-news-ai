@@ -14,13 +14,15 @@ export const MODELS = [
   'openrouter/free',
 ] as const;
 
-export type Phase = 'collect' | 'evaluate' | 'rewrite';
+export type Phase = 'collect' | 'evaluate' | 'rewrite' | 'digest' | 'translate';
 
 // Same chain for every phase
 export const MODEL_CHAINS: Record<Phase, readonly string[]> = {
   collect: [...MODELS],
   evaluate: [...MODELS],
   rewrite: [...MODELS],
+  digest: [...MODELS],
+  translate: [...MODELS],
 };
 
 interface ChatMessage {

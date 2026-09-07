@@ -5,27 +5,29 @@ import { motion } from 'framer-motion';
 import { useNexusStore } from '@/lib/store';
 import { fetchArticles } from '@/lib/api';
 import { useBookmarks } from '@/hooks/useBookmarks';
+import { useT } from '@/lib/i18n';
 
 interface CategoryItem {
   name: string;
-  label: string;
+  labelKey: string;
   emoji: string;
 }
 
 const CATEGORIES: CategoryItem[] = [
-  { name: 'all', label: 'Tutti', emoji: '📰' },
-  { name: 'Tecnologia', label: 'Tecnologia', emoji: '💻' },
-  { name: 'Politica', label: 'Politica', emoji: '🏛️' },
-  { name: 'Economia', label: 'Economia', emoji: '📈' },
-  { name: 'Scienza', label: 'Scienza', emoji: '🔬' },
-  { name: 'Sport', label: 'Sport', emoji: '⚽' },
-  { name: 'Cultura', label: 'Cultura', emoji: '🎭' },
-  { name: 'Salute', label: 'Salute', emoji: '🏥' },
-  { name: 'bookmarks', label: 'Da leggere', emoji: '🔖' },
+  { name: 'all', labelKey: 'catAll', emoji: '📰' },
+  { name: 'Tecnologia', labelKey: 'catTechnology', emoji: '💻' },
+  { name: 'Politica', labelKey: 'catPolitics', emoji: '🏛️' },
+  { name: 'Economia', labelKey: 'catEconomy', emoji: '📈' },
+  { name: 'Scienza', labelKey: 'catScience', emoji: '🔬' },
+  { name: 'Sport', labelKey: 'catSport', emoji: '⚽' },
+  { name: 'Cultura', labelKey: 'catCulture', emoji: '🎭' },
+  { name: 'Salute', labelKey: 'catHealth', emoji: '🏥' },
+  { name: 'bookmarks', labelKey: 'catBookmarks', emoji: '🔖' },
 ];
 
 export default function CategoryBar() {
   const { selectedCategory, setSelectedCategory, setArticles } = useNexusStore();
+  const t = useT();
   const hydrate = useBookmarks((s) => s.hydrate);
 
   const handleCategoryClick = useCallback(
@@ -77,7 +79,7 @@ export default function CategoryBar() {
               `}
             >
               <span className="text-base">{cat.emoji}</span>
-              <span>{cat.label}</span>
+              <span>{t(cat.labelKey)}</span>
             </motion.button>
           );
         })}

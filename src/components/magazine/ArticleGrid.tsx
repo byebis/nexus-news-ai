@@ -8,12 +8,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useNexusStore } from '@/lib/store';
 import { fetchArticles } from '@/lib/api';
 import { useBookmarks } from '@/hooks/useBookmarks';
+import { useT } from '@/lib/i18n';
 import ArticleCard from './ArticleCard';
 
 type SortMode = 'recent' | 'quality';
 
 export default function ArticleGrid() {
   const { articles, selectedCategory, setArticles } = useNexusStore();
+  const t = useT();
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<SortMode>('recent');
   const [loading, setLoading] = useState(true);
@@ -114,10 +116,9 @@ export default function ArticleGrid() {
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
           <Newspaper className="h-8 w-8 text-muted-foreground" />
         </div>
-        <h3 className="mt-4 text-lg font-semibold">Nessun articolo</h3>
+        <h3 className="mt-4 text-lg font-semibold">{t('noArticlesTitle')}</h3>
         <p className="mt-1 text-sm text-muted-foreground max-w-sm">
-          Non ci sono ancora articoli pubblicati in questa categoria.
-          Gli agenti AI stanno lavorando per portarti le ultime notizie.
+          {t('noArticlesBody')}
         </p>
       </div>
     );
@@ -132,9 +133,9 @@ export default function ArticleGrid() {
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Cerca negli articoli..."
+            placeholder={t('searchPlaceholder')}
             className="pl-9 h-9"
-            aria-label="Cerca articoli"
+            aria-label={t('searchPlaceholder')}
           />
         </div>
         <Button
@@ -145,13 +146,13 @@ export default function ArticleGrid() {
           aria-label="Cambia ordinamento"
         >
           {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ArrowUpDown className="h-3.5 w-3.5" />}
-          {sort === 'recent' ? 'Più recenti' : 'Migliori qualità'}
+          {sort === 'recent' ? t('sortRecent') : t('sortQuality')}
         </Button>
       </div>
 
       {filteredArticles.length === 0 ? (
         <div className="py-12 text-center text-sm text-muted-foreground">
-          Nessun risultato per &laquo;{query}&raquo;
+          {t('noResults')} &laquo;{query}&raquo;
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

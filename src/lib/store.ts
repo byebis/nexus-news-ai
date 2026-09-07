@@ -8,6 +8,7 @@ export type AdminTab =
   | 'activity'
   | 'stats'
   | 'health'
+  | 'digest'
   | 'settings'
   | 'channels'
   | 'users';
@@ -78,6 +79,11 @@ export interface Article {
   subtitle: string;
   content: string;
   summary: string;
+  titleEn: string | null;
+  subtitleEn: string | null;
+  summaryEn: string | null;
+  contentEn: string | null;
+  translatedAt: string | null;
   category: string;
   agentId: string;
   sourceName: string;
@@ -102,6 +108,26 @@ export interface ActivityLog {
   status: string;
   createdAt: string;
   agent: { id: string; name: string; avatar: string; category: string };
+}
+
+export interface WeeklyDigest {
+  id: string;
+  agentId: string;
+  weekStart: string;
+  title: string;
+  content: string;
+  articleCount: number;
+  sentChannels: string;
+  createdAt: string;
+  agent: { id: string; name: string; avatar: string; category: string };
+}
+
+export interface DigestAgentCount {
+  id: string;
+  name: string;
+  avatar: string;
+  category: string;
+  weekCount: number;
 }
 
 export interface Settings {
@@ -129,6 +155,7 @@ export const TAB_ROLES: Record<AdminTab, UserRole[]> = {
   settings: ['admin'],
   channels: ['admin'],
   users: ['admin'],
+  digest: ['admin', 'editor'],
 };
 
 interface NexusStore {

@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { Bookmark } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useBookmarks } from '@/hooks/useBookmarks';
+import { useT } from '@/lib/i18n';
 
 interface BookmarkButtonProps {
   articleId: string;
@@ -13,6 +14,7 @@ interface BookmarkButtonProps {
 
 export default function BookmarkButton({ articleId, className, floating }: BookmarkButtonProps) {
   const { ids, toggle, hydrate } = useBookmarks();
+  const t = useT();
 
   useEffect(() => {
     hydrate();
@@ -23,7 +25,7 @@ export default function BookmarkButton({ articleId, className, floating }: Bookm
   if (floating) {
     return (
       <button
-        aria-label={saved ? 'Rimuovi dai salvati' : 'Salva per dopo'}
+        aria-label={saved ? t('removeSaved') : t('saveForLater')}
         onClick={(e) => {
           e.stopPropagation();
           toggle(articleId);
@@ -43,7 +45,7 @@ export default function BookmarkButton({ articleId, className, floating }: Bookm
 
   return (
     <button
-      aria-label={saved ? 'Rimuovi dai salvati' : 'Salva per dopo'}
+      aria-label={saved ? t('removeSaved') : t('saveForLater')}
       onClick={() => toggle(articleId)}
       className={cn(
         'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
@@ -54,7 +56,7 @@ export default function BookmarkButton({ articleId, className, floating }: Bookm
       )}
     >
       <Bookmark className={cn('h-3.5 w-3.5', saved && 'fill-amber-500 text-amber-500')} />
-      {saved ? 'Salvato' : 'Salva'}
+      {saved ? t('saved') : t('save')}
     </button>
   );
 }

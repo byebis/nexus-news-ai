@@ -6,6 +6,7 @@ import { BellRing, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNexusStore } from '@/lib/store';
 import { fetchArticles } from '@/lib/api';
+import { useT } from '@/lib/i18n';
 
 /**
  * AutoRefresh — polls for newly published articles every 60s.
@@ -15,6 +16,7 @@ import { fetchArticles } from '@/lib/api';
  */
 export default function NewArticlesBanner() {
   const { articles, setArticles } = useNexusStore();
+  const t = useT();
   const [newCount, setNewCount] = useState(0);
   const [checking, setChecking] = useState(false);
   const knownIdsRef = useRef<Set<string>>(new Set());
@@ -78,11 +80,11 @@ export default function NewArticlesBanner() {
             </span>
             <span className="text-xs font-medium whitespace-nowrap">
               <BellRing className="inline h-3.5 w-3.5 text-teal-500 mr-1 -mt-0.5" />
-              {newCount} nuov{newCount === 1 ? 'o articolo' : 'i articoli'} in edicola
+              {newCount} {newCount === 1 ? t('oneNewArticle') : t('manyNewArticles')}
             </span>
             <Button size="sm" className="h-7 rounded-full px-3 gap-1.5" onClick={loadNew}>
               <RefreshCw className="h-3 w-3" />
-              Carica
+              {t('loadNow')}
             </Button>
           </div>
         </motion.div>

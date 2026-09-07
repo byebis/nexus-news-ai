@@ -4,21 +4,26 @@ import { Zap } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useNexusStore } from '@/lib/store';
+import { useT } from '@/lib/i18n';
 
 const CATEGORIES = [
-  { name: 'Tecnologia', label: 'Tecnologia' },
-  { name: 'Politica', label: 'Politica' },
-  { name: 'Economia', label: 'Economia' },
-  { name: 'Scienza', label: 'Scienza' },
-  { name: 'Sport', label: 'Sport' },
-  { name: 'Cultura', label: 'Cultura' },
-  { name: 'Salute', label: 'Salute' },
+  { name: 'Tecnologia', labelKey: 'catTechnology' },
+  { name: 'Politica', labelKey: 'catPolitics' },
+  { name: 'Economia', labelKey: 'catEconomy' },
+  { name: 'Scienza', labelKey: 'catScience' },
+  { name: 'Sport', labelKey: 'catSport' },
+  { name: 'Cultura', labelKey: 'catCulture' },
+  { name: 'Salute', labelKey: 'catHealth' },
 ];
 
 export default function Footer() {
   const { settings, setSelectedCategory, setViewMode } = useNexusStore();
+  const t = useT();
   const siteName = settings?.siteName || 'NEXUS NEWS AI';
-  const tagline = settings?.siteTagline || 'Il futuro dell\'informazione, guidato dall\'intelligenza artificiale';
+  const tagline = settings?.siteTagline
+    || (t('heroWelcomeA') === 'Benvenuto su'
+      ? 'Il futuro dell\'informazione, guidato dall\'intelligenza artificiale'
+      : 'The future of news, powered by artificial intelligence');
   const currentYear = new Date().getFullYear();
 
   return (
@@ -38,13 +43,13 @@ export default function Footer() {
             </p>
             <Badge variant="secondary" className="gap-1.5 text-xs">
               <Zap className="h-3 w-3" />
-              Powered by AI Agents
+              {t('poweredBy')}
             </Badge>
           </div>
 
           {/* Categories */}
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold">Categorie</h3>
+            <h3 className="text-sm font-semibold">{t('categories')}</h3>
             <ul className="flex flex-wrap gap-2">
               {CATEGORIES.map((cat) => (
                 <li key={cat.name}>
@@ -55,7 +60,7 @@ export default function Footer() {
                     }}
                     className="text-xs text-muted-foreground transition-colors hover:text-foreground"
                   >
-                    {cat.label}
+                    {t(cat.labelKey)}
                   </button>
                 </li>
               ))}
@@ -64,16 +69,16 @@ export default function Footer() {
 
           {/* Info */}
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold">Informazioni</h3>
+            <h3 className="text-sm font-semibold">{t('about')}</h3>
             <ul className="space-y-2">
               <li>
                 <span className="text-xs text-muted-foreground">
-                  I contenuti sono generati da agenti AI specializzati e revisionati per garantire qualità e accuratezza.
+                  {t('footerDisclaimer')}
                 </span>
               </li>
               <li>
                 <span className="text-xs text-muted-foreground">
-                  © {currentYear} {siteName}. Tutti i diritti riservati.
+                  © {currentYear} {siteName}. {t('allRights')}
                 </span>
               </li>
             </ul>
@@ -88,7 +93,7 @@ export default function Footer() {
           </p>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Zap className="h-3 w-3 text-rose-500" />
-            Powered by AI Agents
+            {t('poweredBy')}
           </div>
         </div>
       </div>
