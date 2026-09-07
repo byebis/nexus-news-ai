@@ -261,3 +261,26 @@ Stage Summary:
 - CODICE L6 COMPLETO E TESTATO — atteso solo token CF per deploy
 - DB produzione già aggiornato: 14/14 articoli con foto (visibile SUBITO dopo il deploy perché il DB è condiviso)
 - NOTA per il futuro: i file .env/.cf-credentials vengono cancellati tra le sessioni — tenere una copia dei valori; token CF NON salvare in chat (rotazione)
+
+---
+Task ID: 6-deploy
+Agent: Super Z (main)
+Task: Deploy Level 6 con nuovo token Cloudflare (fornito da Anton in chat) + verifica live E2E + fix backfill
+
+Work Log:
+- Ricevuto nuovo CF token (cfut_...) + account ID da Anton; ricreato .cf-credentials (chmod 600, gitignored OK)
+- Token verificato via API Cloudflare: status=active
+- npm run pages:build OK; wrangler pages deploy OK -> https://nexus-news-ai.pages.dev live
+- Verifica live: HTTP 200, 15 img su homepage 0 broken; og:image dinamico su pagina articolo confermato (Pollinations/AI per articolo senza foto originale)
+- E2E browser live: hero con illustrazione AI + badge "Illustrazione generata con AI", card con foto reali ANSA (Nvidia, Venezia, Sport), ricerca avanzata "Nvidia" -> 1 risultato con thumbnail + filtri, login admin OK
+- SCOPERTO GAP: backfill POST/GET limitato a status published/approved -> 11 articoli pending_approval (pre-L6) senza foto; bottone Immagini disabilitato (14/14 solo visibili)
+- FIX route.ts backfill: GET stats su TUTTI gli articoli, POST include pending_approval (foto PRIMA dell'approvazione); rebuild + redeploy
+- Backfill eseguito da UI admin: 14/25 -> 24/25 -> 25/25 (2 click, batch 10)
+- Fix dato sporco: titolo con glitch CLM (caratteri CJK "蛛网") corretto via PUT /api/articles/[id] -> "ragnatele di alleanze"; 0 titoli glitchati residui
+- Screenshot live: live-level6-home-foto.png, live-level6-cards-foto.png, live-level6-griglia3.png, live-level6-ricerca.png, live-level6-admin-immagini.png, live-level6-copertura-100.png, live-level6-coda-foto.png
+- Commit da356cb pushato su GitHub
+
+Stage Summary:
+- L6 LIVE IN PRODUZIONE: 25/25 articoli con foto (copertura 100%), mix 13+ foto originali ANSA/INAF + 7 illustrazioni AI (+5 nuovi articoli raccolti durante i test, tutti con foto)
+- Backfill ora copre anche pending_approval: ogni futuro articolo approvato esce GIA' con la foto
+- Deploy funzionante con nuovo token; reminder ad Anton: non salvare il token in chat, ruotare se necessario
