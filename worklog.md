@@ -416,3 +416,27 @@ Stage Summary:
 - Le categorie sono raggiungibili da: nav desktop, menu mobile, CategoryBar home, footer, sitemap
 - Anton ha approvato la bozza Copilot nel frattempo ("AI e imprese italiane" ora pubblicata, visibile in /categoria/tecnologia)
 - Codici creazione account: admin crea utenti dal tab Utenti; /login noindex
+
+---
+Task ID: levelup-11
+Agent: Super Z (main)
+Task: Level 11 — Anton: "briefing audio e riassunto nella pagina dell'articolo" + idee per il livello successivo
+
+Work Log:
+- Recon: TTS articolo gia' esiste (ReaderShell: sentence chunking, rate, pause, guard headless); article.summary esiste nel DB ma MAI mostrato nel body; homepage slot libero dopo HeroSection
+- NEW src/lib/summary.ts: distillSummary() estrattivo zero-cost (frequenza keyword + stopword IT/EN + bonus posizione, 2-3 frasi max 340ch), plainSpokenText() strip markdown/URL per TTS, bestSummary() = AI summary se >=40ch altrimenti distillato
+- NEW SummaryBox.tsx: box "In sintesi" stile NYT Catch Up Fast (border-l-4 primary, bullets rombo, max 4 punti), server calcola testo, client localizza IT/EN
+- NEW AudioBriefing.tsx: card podcast homepage dopo HeroSection — fetch /api/articles?status=published&limit=6 (server API, immune da env build-time), script vocale IT/EN (intro con data localizzata + 5 punti cat+titolo+summary + outro), Web Speech API con chunking 220ch, rate 1x/1.25x/1.5x, play/pause/stop, progress %, stima durata (150wpm), equalizer animato, show-notes numerate, guard headless 1.2s (toast+stop), stop su cambio lingua
+- ArticleBodyClient: lettura TTS ora summary-first (titolo → sottotitolo → "In sintesi: ..." → "Ora l'articolo completo" → corpo)
+- articolo/[id]/page.tsx: + SummaryBox dopo meta bar + JSON-LD schema.org NewsArticle (headline, description=sintesi, author agente, publisher+logo, datePub/Mod, articleSection, mainEntityOfPage)
+- i18n: +19 chiavi IT/EN (summaryKicker, ttsSummaryLead, ttsBodyLead, briefing* x16)
+- Lint pulito sui file nuovi (i18n/ArticleTranslation hanno 2 errori set-state-in-effect PRE-ESISTENTI, non bloccanti)
+- Build OK (pipeline sync-env) + deploy 73ba2dad
+- E2E live: home card OK (titolo "Le notizie in 60 secondi", 5 show-notes, bottone play, stima ~3min); click play in headless (0 voci) → graceful idle + no crash (comportamento corretto); articolo: box In sintesi con 3 bullet estratti; JSON-LD NewsArticle in HTML con headline corretta; mobile 390px OK overflow 0
+- Screenshot: l11-home-briefing.png, l11-articolo-sintesi.png, l11-mobile-briefing.png
+- Commit 47c2890 pushato
+
+Stage Summary:
+- L11 LIVE: briefing audio podcast-style in homepage (zero cost, Web Speech) + In sintesi sempre presente in ogni articolo (AI o estrattivo) + TTS legge prima il riassunto + SEO Google News con JSON-LD
+- Il summary estrattivo copre anche i vecchi articoli senza summary AI
+- Proposte next-level inviate ad Anton: notifiche browser breaking news, reazioni rapide, pagina autore per agente, Google Search Console, MP3 podcast reale (richiede TTS API), commenti con moderazione AI
