@@ -159,3 +159,29 @@ Stage Summary:
 - Deploy live: https://nexus-news-ai.pages.dev (deployment d9ff8f67)
 - Nuove feature attive: Autopilota, letture+trending, Chiosco AI, feed.xml, sitemap.xml, bookmark+Da leggere, editor redazionale
 - Da fare: commit/push quando la rete torna; rigenerazione debate cache-less avviene automaticamente alla prima visita (~25s)
+
+---
+Task ID: levelup-3
+Agent: main (Sasobot)
+Task: Level-Up 3 — esperienza lettura premium + monitoraggio sistema
+
+Work Log:
+- Pushati commit pendenti levelup-2 (819af5e già presente, 55f9498 pushato)
+- READER EXPERIENCE (nuovo src/components/magazine/ReaderShell.tsx):
+  * Barra progresso lettura fixed top (gradiente teal, calcolo su bounds corpo articolo)
+  * TTS "Ascolta": SpeechSynthesis it-IT, chunking frasi ~220 char, play/pause/stop, velocità 1x/1.25x/1.5x, % avanzamento
+  * Guard anti-silenzio: se dopo 1.2s il synth non parla (headless/voci assenti) -> toast + reset
+  * Zoom testo 4 livelli (0.95x-1.3x) applicato via wrapper inline style, primo paragrafo in em (scale coerente)
+  * Toolbar floating bottom (appear dopo 300px scroll, backdrop-blur)
+- SHARE: aggiunti WhatsApp (wa.me) e Telegram (t.me/share) a ShareButtons.tsx (ora X|LinkedIn|WhatsApp|Telegram)
+- SALUTE SISTEMA: nuovo tab admin HealthPanel.tsx + AdminTab 'health' in store.ts + tab config in AdminPanel
+  * 3 card servizio (Supabase/OpenRouter/RSS) con stato live, latenza ms, dettaglio, auto-refresh 30s, bottone Ricontrolla
+- AUTO-REFRESH: NewArticlesBanner.tsx, poll /api/articles ogni 60s, banner floating "N nuovi articoli in edicola" -> Carica (setArticles, niente reload)
+- SKELETON: ArticleGrid mostra 6 card skeleton animate (ui/skeleton) durante il primo load
+- Deploy: d928d19f poi 6320cd2b (fix TTS guard)
+- Test live: tab Salute OK (3 servizi operativi: Supabase 205ms, RSS 1748ms/8 notizie), share 4/4, progress bar 53%, zoom 1.3rem->20.8px verificato, console pulita
+
+Stage Summary:
+- Commit 2dd4a34 pushato su GitHub
+- Sito live: https://nexus-news-ai.pages.dev con reader premium (ascolta/zoom/progresso), share completo, monitoraggio salute, banner nuovi articoli, skeleton
+- Nota: TTS richiede browser con voci installate (Chrome/Edge/Safari desktop e mobile OK; headless mostra toast informativo)
