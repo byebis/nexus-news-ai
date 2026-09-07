@@ -284,3 +284,30 @@ Stage Summary:
 - L6 LIVE IN PRODUZIONE: 25/25 articoli con foto (copertura 100%), mix 13+ foto originali ANSA/INAF + 7 illustrazioni AI (+5 nuovi articoli raccolti durante i test, tutti con foto)
 - Backfill ora copre anche pending_approval: ogni futuro articolo approvato esce GIA' con la foto
 - Deploy funzionante con nuovo token; reminder ad Anton: non salvare il token in chat, ruotare se necessario
+
+---
+Task ID: 7-8
+Agent: Super Z (main)
+Task: Level 7+8 DOPPIO — fix digest overflow mobile + click->pagina articolo (no modal) + PWA offline + personalizzazione
+
+Work Log:
+- FIX overflow digest (riprodotto a 390px: bodyScroll 608px!): grid items min-width:auto + titolo truncate(nowrap) -> aggiunti min-w-0 al grid e alle card digest + overflow-hidden + break-words sui paragrafi; fix anche lista agenti staff
+- FIX navigazione: ArticleCard/HeroSection(2 punti)/SearchOverlay ora router.push('/articolo/{id}'); rimosso ArticleModal da page.tsx, cancellato ArticleModal.tsx, rimosso selectedArticle dallo store; TrendingSection navigava gia'
+- L7 (parte gia' presente da auto-commit 607864c e confermata live): ReaderShell (TTS Ascolta + progress bar + font size 4 livelli) nella pagina articolo via ArticleBodyClient, ShareButtons (X/LinkedIn/WhatsApp/Telegram), feed.xml, sitemap.xml, robots.txt, manifest.json
+- L7 completato: RSS autodiscovery (metadata.alternates in layout) + link RSS nel Footer
+- L8 NUOVO: hook usePersonalization (favorites + history, zustand+localStorage, hydration-safe); ForYouSection ("Per te": chip stella categorie + strip articoli filtrati); ContinueReading ("Continua a leggere": ultime 8 letture con thumbnail, rimozione singola/svuota tutto); HistoryTracker su pagina articolo (push dopo 2.5s di lettura); SWRegister (registrazione SW + badge offline)
+- L8 NUOVO: public/sw.js — network-first per HTML (fresco quando online, cache quando offline, fallback offline page), cache-first per immagini (anche CDN esterne) e asset statici, cache versionate con trim (60/120 voci)
+- FIX _routes.json: aggiunto /sw.js alla exclude list (prima 404 via worker!)
+- i18n: 11 nuove chiavi IT/EN (forYou*, continueReading, offlineBadge, installApp...)
+- Build: 1 errore risolto (useLang residuo in ContinueReading); deploy OK
+- E2E live MOBILE 390px: overflow=0 (prima 218px!), digest ok, card click -> URL /articolo/... (no modal), toolbar lettore visibile (Ascolta/T-/T+), 4 share, HistoryTracker -> strip "Continua a leggere" popolata, ForYou con filtri corretti (Tecnologia+Sport)
+- E2E PWA: sw.js 200 + registrato (scope /, activated); cache popolata (3 HTML/2 img/17 asset); TEST OFFLINE: articolo ricaricato e leggibile senza rete (screenshot!)
+- E2E desktop: digest 2 colonne ok, Per te filtri ok, console pulita
+- NOTA: TTS in headless non ha voci -> guard del componente mostra toast (by design, su browser reali parla)
+- Commit f57e8cd pushato
+
+Stage Summary:
+- DOPPIO LEVEL 7+8 LIVE: tutto verificato in produzione mobile+desktop
+- Zero overflow mobile, navigazione articoli a pagina piena con tutti gli strumenti (TTS/progress/font/share/traduzione)
+- Il giornale si installa come app e si legge OFFLINE; "Per te" e "Continua a leggere" rendono l'esperienza personale
+- RSS feed disponibile per sindacazione (/feed.xml con autodiscovery)
