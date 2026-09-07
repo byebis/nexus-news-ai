@@ -332,3 +332,33 @@ Stage Summary:
   ADMIN: admin@nexusnews.ai / Admin2026!
   EDITOR: editor@nexusnews.ai / Editor2026!
   (login: bottone "Admin" in header -> form "Accesso Redazione")
+
+---
+Task ID: 9-futuristico
+Agent: Super Z (main)
+Task: Level 9 FUTURISTICO — cambio password (promesso ad Anton), Chiedi a Nexus (RAG pubblico), Nexus Copilot (AI studio admin)
+
+Work Log:
+- openrouter.ts: aggiunte fasi 'ask' e 'copilot' (stessa catena modelli, fix Record<Phase,...> con ask/copilot keys)
+- API /api/auth/change-password (POST, sessione richiesta): verifica password attuale, valida nuova (min 8, lettera+numero, diversa), aggiorna password_hash, audit log (anche tentativi falliti)
+- API /api/ask (PUBBLICO): RAG a costo zero — keyword extraction (stopword IT/EN, max 4) -> ilike su title/summary/content articoli PUBLISHED (fallback frase intera) -> contesto numerato [1..n] -> LLM risponde con citazioni + ritorna fonti con id/titolo/categoria/data
+- AskNexus.tsx: orb flottante gradiente animato (rose->orange->violet) bottom-right, pannello conversazione multi-turno, chips suggerite IT/EN, fonti cliccabili -> /articolo/[id], i18n completo; montato in layout.tsx (globale)
+- API /api/copilot (admin+editor): system prompt con CONTESTO LIVE redazione (articoli 7gg, agenti, conteggi status), istruzioni bozza -> blocco ```BOZZA_JSON``` (title/subtitle/summary/content/category), parse robusto + validazione categoria
+- CopilotPanel.tsx: chat multi-turno con quick prompts (Cosa coprire oggi / Analisi performance / 5 titoli virali / Bozza IA), anteprima bozza (titolo, riassunto, testo con conteggio parole, categoria), selettore agente per firma, bottone "Invia alla coda di approvazione" -> POST /api/articles status=pending_approval + refresh coda nello store
+- ProfilePanel.tsx: info account + form cambio password (validazioni client: match, lunghezza) 
+- store.ts: AdminTab + TAB_ROLES estesi con 'copilot' (admin,editor) e 'profilo' (admin,editor); AdminPanel: Copilot primo tab, Profilo ultimo
+- i18n: 9 nuove chiavi askNexus* IT/EN
+- DEPLOY: 2 deploy (8ed7de4f, poi c2da77b2 con fix selettore agenti: fetchAgents client-supabase -> /api/agents HTTP che funziona)
+- E2E LIVE: /api/ask "IA giganti tech" -> risposta IT con 8 fonti citate [2] (model minimax); /api/copilot auth OK, senza auth 401; change-password senza auth 401
+- E2E BROWSER: orb presente, pannello aperto, domanda -> risposta con fonti numerate cliccabili (screenshot); EN: "Ask Nexus" UI inglese OK
+- E2E COPILOT FLOW COMPLETO: quick prompt "Bozza: IA e futuro" -> bozza generata ("Intelligenza artificiale, le imprese italiane accelerano (ma restano indietro)") -> selettore agenti popolato (TechBot default) -> invio coda -> pending 10->11 con agent TechBot ✓ (la bozza resta PENDING come demo per Anton)
+- E2E PASSWORD: Profilo tab -> cambio Admin2026!->Futuro2026x! -> login nuova OK, vecchia respinta -> RIPRISTINATA Admin2026! (verificata)
+- MOBILE 390px: overflow 0px con pannello aperto (screenshot)
+- BUG trovati e risolti: MODEL_CHAINS mancava ask/copilot (tsc); selettore agenti vuoto (fetchAgents client-side falliva silenziosamente -> /api/agents); unicode escape in JSX text (JS non li processa -> caratteri reali); click ref stante nel test (click su elemento sbagliato -> falsa attesa invio)
+- NOTA: .cf-credentials cancellato DUE volte in questa sessione (environment wipe) -> ricreato entrambe le volte; .env ancora presente ma DATABASE_URL punta a sqlite locale (non usato in prod)
+- Commit 7cf03a9 pushato
+
+Stage Summary:
+- L9 LIVE: il giornale ha ora un'AI conversazionale pubblica (Chiedi a Nexus con fonti) e uno studio AI in redazione (Copilot con bozze firmate dagli agenti -> coda approvazione)
+- Profilo: Anton puo' cambiarsi la password da solo (bottone Admin -> tab Profilo); password admin ripristinata a Admin2026! e verificata
+- Bozza Copilot "AI e imprese italiane" lasciata IN CODA come demo per Anton (puo' approvarla per vedere il flusso completo con foto)
