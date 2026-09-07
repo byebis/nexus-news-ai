@@ -23,6 +23,7 @@ import {
   Sparkles,
   UserRound,
   ArrowLeft,
+  Network,
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -42,9 +43,11 @@ import DigestPanel from './DigestPanel';
 import ImagesPanel from './ImagesPanel';
 import CopilotPanel from './CopilotPanel';
 import ProfilePanel from './ProfilePanel';
+import WirePanel from './WirePanel';
 
 const TAB_CONFIG: { value: AdminTab; label: string; short: string; icon: React.ReactNode }[] = [
   { value: 'copilot', label: 'Copilot AI', short: 'Copilot', icon: <Sparkles className="h-4 w-4" /> },
+  { value: 'wire', label: 'Nexus Wire', short: 'Wire', icon: <Network className="h-4 w-4" /> },
   { value: 'agents', label: 'Agenti AI', short: 'Agenti', icon: <Bot className="h-4 w-4" /> },
   { value: 'approval', label: 'Coda Approvazione', short: 'Coda', icon: <ClipboardCheck className="h-4 w-4" /> },
   { value: 'publishing', label: 'Pubblicazione', short: 'Pubblica', icon: <Send className="h-4 w-4" /> },
@@ -230,6 +233,9 @@ export default function AdminPanel() {
         </TabsContent>
         <TabsContent value="copilot" className="mt-4">
           <CopilotPanel />
+        </TabsContent>
+        <TabsContent value="wire" className="mt-4">
+          <WirePanel />
         </TabsContent>
         <TabsContent value="approval" className="mt-4">
           <ApprovalQueue />

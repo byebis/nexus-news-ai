@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Zap, Rss, Download, Shield } from 'lucide-react';
+import { Zap, Rss, Download, Shield, Network } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useNexusStore } from '@/lib/store';
@@ -118,6 +118,15 @@ export default function Footer() {
                 <span className="text-xs text-muted-foreground">
                   © {currentYear} {siteName}. {t('allRights')}
                 </span>
+              </li>
+              <li>
+                <Link
+                  href="/wire"
+                  className="inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <Network className="h-3 w-3" />
+                  {t('wireMenu')}
+                </Link>
               </li>
               <li>
                 <Link

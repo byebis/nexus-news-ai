@@ -17,6 +17,7 @@ import {
   Home,
   ChevronRight,
   Bookmark,
+  Network,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNexusStore } from '@/lib/store';
@@ -323,6 +324,16 @@ export default function Header() {
               <p className="mt-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                 {t('menuServices')}
               </p>
+              <Button
+                variant="outline"
+                className="w-full justify-start gap-2"
+                asChild
+              >
+                <Link href="/wire">
+                  <Network className="h-4 w-4" />
+                  {t('wireMenu')}
+                </Link>
+              </Button>
               <Button
                 variant="outline"
                 className="w-full justify-start gap-2"

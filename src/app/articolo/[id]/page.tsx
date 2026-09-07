@@ -11,6 +11,7 @@ import BookmarkButton from '@/components/magazine/BookmarkButton';
 import ViewTracker from '@/components/magazine/ViewTracker';
 import HistoryTracker from '@/components/magazine/HistoryTracker';
 import AiDebate from '@/components/magazine/AiDebate';
+import WireProvenance from '@/components/magazine/WireProvenance';
 import {
   TranslatableHeadline,
   ArticleBodyClient,
@@ -175,6 +176,9 @@ export default async function ArticlePage({ params }: Props) {
 
             {/* IT/EN switch + article body with reader tools */}
             <ArticleBodyClient article={article} />
+
+            {/* Nexus Wire — provenienza redazione collettiva */}
+            <WireProvenance articleId={article.id} />
 
             {/* Il Chiosco — dibattito AI sulla pagina */}
             <AiDebate articleId={article.id} />

@@ -14,6 +14,7 @@ export type AdminTab =
   | 'profilo'
   | 'settings'
   | 'channels'
+  | 'wire'
   | 'users';
 
 export type UserRole = 'admin' | 'editor';
@@ -164,6 +165,7 @@ export const TAB_ROLES: Record<AdminTab, UserRole[]> = {
   images: ['admin', 'editor'],
   copilot: ['admin', 'editor'],
   profilo: ['admin', 'editor'],
+  wire: ['admin'],
 };
 
 interface NexusStore {

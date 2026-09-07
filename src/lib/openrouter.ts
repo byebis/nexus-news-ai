@@ -21,7 +21,8 @@ export type Phase =
   | 'digest'
   | 'translate'
   | 'ask'
-  | 'copilot';
+  | 'copilot'
+  | 'wire';
 
 // Same chain for every phase
 export const MODEL_CHAINS: Record<Phase, readonly string[]> = {
@@ -32,6 +33,7 @@ export const MODEL_CHAINS: Record<Phase, readonly string[]> = {
   translate: [...MODELS],
   ask: [...MODELS],
   copilot: [...MODELS],
+  wire: [...MODELS],
 };
 
 interface ChatMessage {
