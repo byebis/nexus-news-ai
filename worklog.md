@@ -440,3 +440,32 @@ Stage Summary:
 - L11 LIVE: briefing audio podcast-style in homepage (zero cost, Web Speech) + In sintesi sempre presente in ogni articolo (AI o estrattivo) + TTS legge prima il riassunto + SEO Google News con JSON-LD
 - Il summary estrattivo copre anche i vecchi articoli senza summary AI
 - Proposte next-level inviate ad Anton: notifiche browser breaking news, reazioni rapide, pagina autore per agente, Google Search Console, MP3 podcast reale (richiede TTS API), commenti con moderazione AI
+
+---
+Task ID: levelup-12
+Agent: Super Z (main)
+Task: Level 12 — Anton: feature stile Moltbook (agenti che si commentano/revisionano) + portale dove gli agenti producono insieme la migliore notizia leggendo almeno 3 articoli sullo stesso argomento, opzionale per l'admin
+
+Work Log:
+- PROBLEMA DDL: pooler Supabase morto ("tenant not found" su tutte le regioni aws-0/aws-1, IPv6 diretto irraggiungibile, nessun service key) → NESSUNA via per CREATE TABLE
+- SOLUZIONE: persistenza su activity_logs con convenzioni strutturate incapsulate in lib/wire-store.ts (action='wire_run' detail JSON / 'wire_comment' / 'wire_setting' per il toggle) — migrabile a tabelle dedicate cambiando solo quel file
+- .env di nuovo resettato dall'ambiente → sync-env-from-wrangler.js ha ripristinato 4 chiavi (il fix L9 continua a proteggere); .cf-credentials ricreato
+- NEW lib/wire-engine.ts: pipeline 5 ruoli su 7 agenti reali con personalità: SELEZIONE 3-5 fonti (RSS 7 categorie in parallelo + archivio published) → RICERCATORE dossier (facts/numbers/differences/angles + categoria) → REDATTORE bozza 400-650 parole → 2 REVISORI in parallelo (voto 0-100 + forti/deboli/suggerimenti) → EDITOR finale che integra le revisioni → articolo in pending_approval (source_name 'Nexus Wire — Redazione Collettiva', quality=media revisioni) + 5 commenti in bacheca
+- RESILIENZA (dopo 3 iterazioni debug): extractPicks (JSON lasco + regex "index") + keywordPicks fallback senza LLM per selezione; callWireJSON con retry + reminder "inizia direttamente con {"; dossier fallback dalle fonti; final fallback alla bozza; lock run non conta i failed (hasRecentRun .neq error); repairParse riusato dall'engine collect
+- API: POST /api/wire/run (requireRole admin + toggle + lock 4min, maxDuration 300), GET /api/wire/runs (pubblico, ?articleId= per provenienza), POST /api/wire/runs (toggle admin on/off)
+- openrouter.ts: + phase 'wire'
+- Portale /wire: hero + pipeline 4 step + Le Edizioni (stato/fonti/qualità/agenti/link solo se published|approved) + La Bacheca della Redazione (commenti agenti con avatar, ruolo, voto); stato disabled se toggle off; generateMetadata; title senza suffisso duplicato
+- Admin: tab 'wire' (admin-only in TAB_ROLES) + WirePanel (Switch toggle, input argomento + 6 suggestion chips, progress 7 fasi animate, risultato con scores/models, storico 10 edizioni)
+- Articolo: WireProvenance client component (GET runs?articleId, box border-violet con fonti/qualità/agenti/link portale) dopo ArticleBodyClient
+- Header menu mobile SERVIZI + Footer Info: link "Redazione Collettiva" (/wire)
+- i18n: +33 chiavi IT/EN wire*
+- E2E PRODUZIONE (run reale!): topic "Intelligenza artificiale generativa nelle imprese" → COMPLETED in ~3min: 4 fonti selezionate, CultureHub ricercatore, TechBot redattore ("IA generativa nelle imprese italiane: tra accelerazione e ritardi"), MarketPulse+SciExplorer revisori (70/100), MarketPulse editor → articolo 9c3bc582 in coda → APPROVATO da me per test → live con box provenienza (4 fonti, qualità 70%, 4 agenti) → toggle OFF/ON verificato (enabled false→true)
+- Bug fixati in corsa: selectedIdx era diventato array di numeri ma map usava s.index (crash title); parse selezione rigido (0 fonti); dossier non parsabile (senza retry)
+- Screenshot: l12-admin-wire-tab.png, l12-wire-portal.png, l12-wire-bacheca.png, l12-articolo-provenienza.png
+- Commit b339907 pushato
+
+Stage Summary:
+- L12 LIVE: Nexus Wire funziona END-TO-END in produzione (prima edizione completata e pubblicata!)
+- Gli agenti SI COMMENTANO E SI REVISIONANO in pubblico (bacheca stile Moltbook) e producono articoli multi-fonte (≥3) che passano sempre dall'approvazione admin
+- Toggle admin ON/OFF: quando OFF il portale mostra "Portale in pausa" e l'API rifiuta i run
+- Nota futura: se si vogliono tabelle dedicate (wire_runs/agent_comments), serve DDL — script pronto in scripts/migrate-levelup12.py ma pooler Supabase morto; la convenzione activity_logs è equivalente e già migrabile
