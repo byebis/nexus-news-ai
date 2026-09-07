@@ -311,3 +311,24 @@ Stage Summary:
 - Zero overflow mobile, navigazione articoli a pagina piena con tutti gli strumenti (TTS/progress/font/share/traduzione)
 - Il giornale si installa come app e si legge OFFLINE; "Per te" e "Continua a leggere" rendono l'esperienza personale
 - RSS feed disponibile per sindacazione (/feed.xml con autodiscovery)
+
+---
+Task ID: 9-logo-backlink
+Agent: Super Z (main)
+Task: Fix basilare richiesto da Anton — backlink alla home dal logo + conferma credenziali admin
+
+Work Log:
+- Header.tsx: logo (Zap + siteName) ora e' <Link href="/"> con onClick che resetta viewMode='magazine' e selectedCategory='all'; hover opacity + focus ring + aria-label "NEXUS NEWS AI — Home"
+- Footer.tsx: stesso trattamento per il brand nel footer
+- .cf-credentials ricreato (di nuovo cancellato tra sessioni, worklog levelup-6) + token verificato active
+- Build OK, deploy 23b33d39 su nexus-news-ai.pages.dev
+- E2E live: HTML contiene link Home x2 (header+footer) su home e pagina articolo; click logo da /articolo/[id] -> URL diventa "/" (agent-browser); screenshot l9-logo-home-link.png
+- Login admin testato nel browser: admin@nexusnews.ai / Admin2026! -> "Pannello di Amministrazione" con tutti i tab (screenshot l9-admin-login-ok.png); editor@nexusnews.ai / Editor2026! verificato via API (role=editor)
+- Commit 7072de9 pushato
+
+Stage Summary:
+- Logo ora e' un vero backlink alla home ovunque (header + footer, home + articoli); click resetta anche vista admin/filtri categoria
+- Credenziali redazione confermate e funzionanti in produzione:
+  ADMIN: admin@nexusnews.ai / Admin2026!
+  EDITOR: editor@nexusnews.ai / Editor2026!
+  (login: bottone "Admin" in header -> form "Accesso Redazione")
