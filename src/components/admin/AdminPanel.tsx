@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   PenLine,
   Newspaper,
+  ImageIcon,
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,7 @@ import HealthPanel from './HealthPanel';
 import ChannelsPanel from './ChannelsPanel';
 import UsersPanel from './UsersPanel';
 import DigestPanel from './DigestPanel';
+import ImagesPanel from './ImagesPanel';
 
 const TAB_CONFIG: { value: AdminTab; label: string; short: string; icon: React.ReactNode }[] = [
   { value: 'agents', label: 'Agenti AI', short: 'Agenti', icon: <Bot className="h-4 w-4" /> },
@@ -43,6 +45,7 @@ const TAB_CONFIG: { value: AdminTab; label: string; short: string; icon: React.R
   { value: 'stats', label: 'Statistiche', short: 'Stats', icon: <BarChart3 className="h-4 w-4" /> },
   { value: 'health', label: 'Salute Sistema', short: 'Salute', icon: <HeartPulse className="h-4 w-4" /> },
   { value: 'digest', label: 'Digest', short: 'Digest', icon: <Newspaper className="h-4 w-4" /> },
+  { value: 'images', label: 'Immagini', short: 'Foto', icon: <ImageIcon className="h-4 w-4" /> },
   { value: 'settings', label: 'Impostazioni', short: 'Impost.', icon: <Settings className="h-4 w-4" /> },
   { value: 'channels', label: 'Canali', short: 'Canali', icon: <Link2 className="h-4 w-4" /> },
   { value: 'users', label: 'Utenti', short: 'Utenti', icon: <Users className="h-4 w-4" /> },
@@ -223,6 +226,9 @@ export default function AdminPanel() {
         </TabsContent>
         <TabsContent value="digest" className="mt-4">
           <DigestPanel />
+        </TabsContent>
+        <TabsContent value="images" className="mt-4">
+          <ImagesPanel />
         </TabsContent>
         <TabsContent value="settings" className="mt-4">
           <SettingsPanel />

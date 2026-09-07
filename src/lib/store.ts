@@ -9,6 +9,7 @@ export type AdminTab =
   | 'stats'
   | 'health'
   | 'digest'
+  | 'images'
   | 'settings'
   | 'channels'
   | 'users';
@@ -158,6 +159,7 @@ export const TAB_ROLES: Record<AdminTab, UserRole[]> = {
   channels: ['admin'],
   users: ['admin'],
   digest: ['admin', 'editor'],
+  images: ['admin', 'editor'],
 };
 
 interface NexusStore {

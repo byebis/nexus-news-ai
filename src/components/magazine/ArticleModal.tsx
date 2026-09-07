@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useNexusStore } from '@/lib/store';
 import { useT, useLang, useCategoryName, pickTitle, pickSubtitle, LDate } from '@/lib/i18n';
+import { ArticleImage } from '@/components/magazine/ArticleImage';
 
 const CATEGORY_BADGE_COLORS: Record<string, string> = {
   tecnologia: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/40 dark:text-cyan-300',
@@ -50,12 +51,16 @@ const PLATFORM_LABELS: Record<string, string> = {
 };
 
 export default function ArticleModal() {
-  const { selectedArticle, setSelectedArticle } = useNexusStore();
+  const { selectedArticle, setSelectedArticle, articles } = useNexusStore();
   const t = useT();
   const { lang } = useLang();
   const categoryName = useCategoryName();
 
   if (!selectedArticle) return null;
+
+  const related = articles
+    .filter((a) => a.id !== selectedArticle.id && a.category === selectedArticle.category)
+    .slice(0, 2);
 
   const categoryLower = selectedArticle.category?.toLowerCase() || 'tecnologia';
   const badgeClass = CATEGORY_BADGE_COLORS[categoryLower] || CATEGORY_BADGE_COLORS.tecnologia;
@@ -141,6 +146,45 @@ export default function ArticleModal() {
             {t('openFullPage')}
             <ExternalLink className="h-3.5 w-3.5" />
           </a>
+
+          {/* Related articles (same category, from the magazine) */}
+          {related.length > 0 && (
+            <>
+              <Separator className="my-4" />
+              <h4 className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {t('relatedFrom', { cat: categoryName(selectedArticle.category) })}
+              </h4>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {related.map((r) => (
+                  <button
+                      key={r.id}
+                      onClick={() => setSelectedArticle(r)}
+                      className="group flex items-stretch gap-2.5 rounded-xl border p-2 text-left transition-colors hover:bg-muted/60"
+                    >
+                      <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-lg">
+                        <ArticleImage
+                          imageUrl={r.imageUrl}
+                          imageCredit={r.imageCredit}
+                          imageCreditUrl={r.imageCreditUrl}
+                          category={r.category}
+                          seed={r.id}
+                          alt={r.title}
+                          className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="line-clamp-2 text-xs font-semibold leading-snug group-hover:text-primary">
+                          {pickTitle(lang, r)}
+                        </p>
+                        <p className="mt-0.5 text-[10px] text-muted-foreground">
+                          {r.agent?.name || 'AI Agent'} · {r.readTime} min
+                        </p>
+                      </div>
+                    </button>
+                ))}
+              </div>
+            </>
+          )}
 
           {/* Source */}
           {selectedArticle.sourceUrl && (

@@ -4,14 +4,55 @@ import { resolveArticleImage } from '@/lib/article-image';
 
 export const maxDuration = 120;
 
+const MISSING_OR = 'image_url.is.null,image_url.eq.';
+
 /**
- * POST /api/images/backfill  (admin only)
+ * GET /api/images/backfill (admin+editor)
+ * Coverage stats: how many published/approved articles have a real photo,
+ * how many are missing, plus the next batch of missing titles.
+ */
+export async function GET(request: Request) {
+  const guard = await requireRole(request, ['admin', 'editor']);
+  if (guard.error) return guard.error;
+
+  const [totalRes, withPhotoRes] = await Promise.all([
+    supabase.from('articles').select('id', { count: 'exact', head: true }).in('status', ['published', 'approved']),
+    supabase.from('articles').select('id', { count: 'exact', head: true }).in('status', ['published', 'approved']).not('image_url', 'is', null).neq('image_url', ''),
+  ]);
+
+  const total = totalRes.count ?? 0;
+  const withPhoto = withPhotoRes.count ?? 0;
+
+  const { data: missing } = await supabase
+    .from('articles')
+    .select('id, title, category, source_name')
+    .or(MISSING_OR)
+    .in('status', ['published', 'approved'])
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  return Response.json({
+    total,
+    withPhoto,
+    missing: total - withPhoto,
+    coverage: total > 0 ? Math.round((withPhoto / total) * 100) : 100,
+    next: (missing || []).map((m: Record<string, unknown>) => ({
+      id: m.id,
+      title: m.title,
+      category: m.category,
+      source: m.source_name,
+    })),
+  });
+}
+
+/**
+ * POST /api/images/backfill  (admin+editor)
  * Finds published/approved articles without a cover image and resolves one
- * via the full chain (original page og:image -> Openverse -> Wikimedia -> AI).
+ * via the full chain (RSS photo -> original page og:image -> Openverse -> Wikimedia -> AI).
  * Body: { limit?: number }  — default 8 per call.
  */
 export async function POST(request: Request) {
-  const guard = await requireRole(request, ['admin']);
+  const guard = await requireRole(request, ['admin', 'editor']);
   if (guard.error) return guard.error;
 
   let limit = 8;
@@ -23,7 +64,7 @@ export async function POST(request: Request) {
   const { data: missing, error } = await supabase
     .from('articles')
     .select('id, title, summary, category, source_name, source_url')
-    .or('image_url.is.null,image_url.eq.')
+    .or(MISSING_OR)
     .in('status', ['published', 'approved'])
     .order('created_at', { ascending: false })
     .limit(limit);

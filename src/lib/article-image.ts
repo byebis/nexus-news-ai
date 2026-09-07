@@ -19,6 +19,12 @@ function withTimeout(ms: number): { signal: AbortSignal; done: () => void } {
   return { signal: controller.signal, done: () => clearTimeout(timer) };
 }
 
+/** Feed/site logos, icons and placeholders are never a good article photo. */
+function looksLikeLogo(url: string): boolean {
+  if (/\.(svg|ico|gif)(\?|$)/i.test(url)) return true;
+  return /(logo|icon|avatar|sprite|placeholder|precomposed|favicon|\/ico\/|\/img\/ico\/)/i.test(url);
+}
+
 /** HEAD check: must be 200 with an image/* content-type (some hosts need a browser UA). */
 async function isValidImage(url: string): Promise<boolean> {
   if (!url || !url.startsWith('https://')) return false;
@@ -84,8 +90,21 @@ async function imageFromPage(pageUrl: string, sourceName: string): Promise<Resol
       html.match(/<meta[^>]+property=["']og:image(?::secure_url)?["'][^>]+content=["']([^"']+)["']/i)?.[1] ||
       html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1] ||
       html.match(/<meta[^>]+name=["']twitter:image(?::src)?["'][^>]+content=["']([^"']+)["']/i)?.[1] || '';
-    const url = og.trim().replace(/&amp;/g, '&');
-    if (url && (await isValidImage(url))) {
+    const url0 = og.trim().replace(/&amp;/g, '&');
+    let url = url0;
+    if (!url || looksLikeLogo(url)) {
+      // Fallback: first plausible photo in the page body (many news sites, e.g. ANSA,
+      // skip og:image but embed the article photo in the markup).
+      for (const m of html.matchAll(/<img[^>]+(?:data-src|src)=["']([^"']+)["']/gi)) {
+        const cand = m[1].trim().replace(/&amp;/g, '&');
+        if (!cand.startsWith('https://') || looksLikeLogo(cand)) continue;
+        if (!/\.(jpe?g|png|webp)(\?|$)/i.test(cand)) continue;
+        if (!/(webimages|media|uploads|photo|img_)/i.test(cand)) continue;
+        url = cand;
+        break;
+      }
+    }
+    if (url && !looksLikeLogo(url) && (await isValidImage(url))) {
       return {
         url,
         credit: `Foto: ${sourceName || 'fonte originale'}`,
@@ -248,10 +267,10 @@ export interface ResolveOptions {
 export async function resolveArticleImage(opts: ResolveOptions): Promise<ResolvedImage | null> {
   const { title, summary, category, sourceName, rssImage, pageUrl, allowAI = true } = opts;
 
-  // 1) Original photo attached to the RSS item
+  // 1) Original photo attached to the RSS item (never a site logo/icon)
   if (rssImage) {
     const url = rssImage.trim().replace(/&amp;/g, '&');
-    if (url.startsWith('https://') && (await isValidImage(url))) {
+    if (url.startsWith('https://') && !looksLikeLogo(url) && (await isValidImage(url))) {
       return { url, credit: `Foto: ${sourceName || 'fonte originale'}`, creditUrl: pageUrl || '', origin: 'originale' };
     }
   }
