@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "next-themes";
 import { LanguageProvider } from "@/lib/i18n";
 import SWRegister from "@/components/shared/SWRegister";
+import AskNexus from "@/components/magazine/AskNexus";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -65,6 +66,7 @@ export default function RootLayout({
         >
           <LanguageProvider>
             {children}
+            <AskNexus />
             <SWRegister />
             <Toaster />
           </LanguageProvider>

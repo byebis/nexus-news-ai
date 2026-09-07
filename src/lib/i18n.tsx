@@ -142,6 +142,19 @@ const DICT: Record<string, { it: string; en: string }> = {
   offlineBadge: { it: 'Offline — leggi gli articoli già visitati', en: 'Offline — read already visited articles' },
   installApp: { it: 'Installa app', en: 'Install app' },
 
+  // Chiedi a Nexus (assistente AI pubblico)
+  askNexusTitle: { it: 'Chiedi a Nexus', en: 'Ask Nexus' },
+  askNexusSub: { it: 'L’AI del giornale risponde con le fonti', en: 'The paper’s AI answers with sources' },
+  askNexusIntro: {
+    it: 'Fai una domanda: Nexus legge gli articoli pubblicati e risponde citando le fonti.',
+    en: 'Ask anything: Nexus reads the published articles and answers citing its sources.',
+  },
+  askPlaceholder: { it: 'Chiedi qualcosa al giornale…', en: 'Ask the paper anything…' },
+  askThinking: { it: 'Nexus sta leggendo il giornale…', en: 'Nexus is reading the paper…' },
+  askSources: { it: 'Fonti', en: 'Sources' },
+  askSend: { it: 'Invia domanda', en: 'Send question' },
+  askError: { it: 'Nexus non riesce a rispondere ora, riprova tra poco.', en: 'Nexus can’t answer right now, please try again soon.' },
+
   // Bookmarks
   saveForLater: { it: 'Salva per dopo', en: 'Save for later' },
   removeSaved: { it: 'Rimuovi dai salvati', en: 'Remove from saved' },

@@ -18,6 +18,8 @@ import {
   PenLine,
   Newspaper,
   ImageIcon,
+  Sparkles,
+  UserRound,
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -36,8 +38,11 @@ import ChannelsPanel from './ChannelsPanel';
 import UsersPanel from './UsersPanel';
 import DigestPanel from './DigestPanel';
 import ImagesPanel from './ImagesPanel';
+import CopilotPanel from './CopilotPanel';
+import ProfilePanel from './ProfilePanel';
 
 const TAB_CONFIG: { value: AdminTab; label: string; short: string; icon: React.ReactNode }[] = [
+  { value: 'copilot', label: 'Copilot AI', short: 'Copilot', icon: <Sparkles className="h-4 w-4" /> },
   { value: 'agents', label: 'Agenti AI', short: 'Agenti', icon: <Bot className="h-4 w-4" /> },
   { value: 'approval', label: 'Coda Approvazione', short: 'Coda', icon: <ClipboardCheck className="h-4 w-4" /> },
   { value: 'publishing', label: 'Pubblicazione', short: 'Pubblica', icon: <Send className="h-4 w-4" /> },
@@ -49,6 +54,7 @@ const TAB_CONFIG: { value: AdminTab; label: string; short: string; icon: React.R
   { value: 'settings', label: 'Impostazioni', short: 'Impost.', icon: <Settings className="h-4 w-4" /> },
   { value: 'channels', label: 'Canali', short: 'Canali', icon: <Link2 className="h-4 w-4" /> },
   { value: 'users', label: 'Utenti', short: 'Utenti', icon: <Users className="h-4 w-4" /> },
+  { value: 'profilo', label: 'Profilo', short: 'Profilo', icon: <UserRound className="h-4 w-4" /> },
 ];
 
 const ROLE_INFO: Record<string, { label: string; icon: React.ReactNode; badge: string }> = {
@@ -209,6 +215,9 @@ export default function AdminPanel() {
         <TabsContent value="agents" className="mt-4">
           <AgentManager />
         </TabsContent>
+        <TabsContent value="copilot" className="mt-4">
+          <CopilotPanel />
+        </TabsContent>
         <TabsContent value="approval" className="mt-4">
           <ApprovalQueue />
         </TabsContent>
@@ -238,6 +247,9 @@ export default function AdminPanel() {
         </TabsContent>
         <TabsContent value="users" className="mt-4">
           <UsersPanel />
+        </TabsContent>
+        <TabsContent value="profilo" className="mt-4">
+          <ProfilePanel />
         </TabsContent>
       </Tabs>
     </motion.div>
