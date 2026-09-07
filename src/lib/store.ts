@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 export type ViewMode = 'magazine' | 'admin';
-export type AdminTab = 'agents' | 'approval' | 'publishing' | 'activity' | 'stats' | 'settings';
+export type AdminTab = 'agents' | 'approval' | 'publishing' | 'activity' | 'stats' | 'health' | 'settings';
 
 export interface Agent {
   id: string;

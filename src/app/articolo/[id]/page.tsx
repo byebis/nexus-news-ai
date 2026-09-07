@@ -8,6 +8,7 @@ import { ShareButtons } from '@/components/magazine/ShareButtons';
 import BookmarkButton from '@/components/magazine/BookmarkButton';
 import ViewTracker from '@/components/magazine/ViewTracker';
 import AiDebate from '@/components/magazine/AiDebate';
+import ReaderShell from '@/components/magazine/ReaderShell';
 import { ArrowLeft, Clock, ShieldCheck, User, Eye } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import ArticleCard from '@/components/magazine/ArticleCard';
@@ -58,6 +59,11 @@ export default async function ArticlePage({ params }: Props) {
     day: 'numeric', month: 'long', year: 'numeric',
   });
   const paragraphs = (article.content || '').split(/\n+/).filter((p) => p.trim().length > 0);
+  const plainText = [
+    article.title,
+    article.subtitle || '',
+    article.content || article.summary || '',
+  ].join('. ').replace(/\s+/g, ' ').trim();
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -121,17 +127,19 @@ export default async function ArticlePage({ params }: Props) {
               </div>
             </div>
 
-            <div className="py-8 space-y-6 text-[1.05rem] leading-relaxed">
-              {paragraphs.length > 0 ? (
-                paragraphs.map((p, i) => (
-                  <p key={i} className={i === 0 ? 'text-xl font-medium text-foreground/90 first-letter:text-5xl first-letter:font-extrabold first-letter:mr-2 first-letter:float-left first-letter:leading-[0.9]' : ''}>
-                    {p}
-                  </p>
-                ))
-              ) : (
-                <p className="text-muted-foreground">{article.summary}</p>
-              )}
-            </div>
+            <ReaderShell text={plainText}>
+              <div className="py-8 space-y-6 leading-relaxed">
+                {paragraphs.length > 0 ? (
+                  paragraphs.map((p, i) => (
+                    <p key={i} className={i === 0 ? 'text-[1.25em] font-medium text-foreground/90 first-letter:text-5xl first-letter:font-extrabold first-letter:mr-2 first-letter:float-left first-letter:leading-[0.9]' : ''}>
+                      {p}
+                    </p>
+                  ))
+                ) : (
+                  <p className="text-muted-foreground">{article.summary}</p>
+                )}
+              </div>
+            </ReaderShell>
 
             {/* Il Chiosco — dibattito AI sulla pagina */}
             <AiDebate articleId={article.id} />

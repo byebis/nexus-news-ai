@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Newspaper, Search, ArrowUpDown, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useNexusStore } from '@/lib/store';
 import { fetchArticles } from '@/lib/api';
 import { useBookmarks } from '@/hooks/useBookmarks';
@@ -76,6 +77,36 @@ export default function ArticleGrid() {
     }
     return list;
   }, [articles, selectedCategory, query, sort]);
+
+  if (loading && articles.length === 0) {
+    return (
+      <div>
+        {/* Skeleton toolbar */}
+        <div className="flex gap-2 mb-5">
+          <Skeleton className="h-9 flex-1 rounded-md" />
+          <Skeleton className="h-9 w-32 rounded-md" />
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="rounded-xl border bg-card overflow-hidden">
+              <Skeleton className="h-40 w-full rounded-none" />
+              <div className="p-4 space-y-3">
+                <Skeleton className="h-3 w-20 rounded-full" />
+                <Skeleton className="h-5 w-full" />
+                <Skeleton className="h-5 w-4/5" />
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-2/3" />
+                <div className="flex items-center justify-between pt-1">
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-6 w-6 rounded-full" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (filteredArticles.length === 0 && !loading && !query) {
     return (
