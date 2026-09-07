@@ -1,7 +1,42 @@
 import { create } from 'zustand';
 
 export type ViewMode = 'magazine' | 'admin';
-export type AdminTab = 'agents' | 'approval' | 'publishing' | 'activity' | 'stats' | 'health' | 'settings';
+export type AdminTab =
+  | 'agents'
+  | 'approval'
+  | 'publishing'
+  | 'activity'
+  | 'stats'
+  | 'health'
+  | 'settings'
+  | 'channels'
+  | 'users';
+
+export type UserRole = 'admin' | 'editor';
+
+export interface SessionUser {
+  uid: string;
+  email: string;
+  name: string;
+  role: UserRole;
+}
+
+export interface ManagedUser extends SessionUser {
+  active: boolean;
+  lastLoginAt: string | null;
+  createdAt: string;
+}
+
+export interface ChannelConfig {
+  id: string;
+  channel: string;
+  label: string;
+  enabled: boolean;
+  config: Record<string, string>;
+  lastTestAt: string | null;
+  lastTestStatus: string;
+  lastTestDetail: string;
+}
 
 export interface Agent {
   id: string;
@@ -83,12 +118,31 @@ export interface Settings {
   siteTagline: string;
 }
 
+/** Permessi per tab: admin vede tutto, l'editor solo le tab editoriali. */
+export const TAB_ROLES: Record<AdminTab, UserRole[]> = {
+  agents: ['admin'],
+  approval: ['admin', 'editor'],
+  publishing: ['admin', 'editor'],
+  activity: ['admin', 'editor'],
+  stats: ['admin', 'editor'],
+  health: ['admin', 'editor'],
+  settings: ['admin'],
+  channels: ['admin'],
+  users: ['admin'],
+};
+
 interface NexusStore {
   // View state
   viewMode: ViewMode;
   adminTab: AdminTab;
   setViewMode: (mode: ViewMode) => void;
   setAdminTab: (tab: AdminTab) => void;
+
+  // Auth
+  currentUser: SessionUser | null;
+  authChecked: boolean;
+  setCurrentUser: (user: SessionUser | null) => void;
+  setAuthChecked: (checked: boolean) => void;
 
   // Selected article
   selectedArticle: Article | null;
@@ -130,6 +184,11 @@ export const useNexusStore = create<NexusStore>((set) => ({
   adminTab: 'agents',
   setViewMode: (mode) => set({ viewMode: mode }),
   setAdminTab: (tab) => set({ adminTab: tab }),
+
+  currentUser: null,
+  authChecked: false,
+  setCurrentUser: (user) => set({ currentUser: user }),
+  setAuthChecked: (checked) => set({ authChecked: checked }),
 
   selectedArticle: null,
   setSelectedArticle: (article) => set({ selectedArticle: article }),

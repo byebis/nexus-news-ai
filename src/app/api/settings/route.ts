@@ -1,4 +1,5 @@
 import { fetchSettings, updateSettings } from '@/lib/api';
+import { requireRole } from '@/lib/auth';
 
 export async function GET() {
   try {
@@ -26,6 +27,10 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
+  // Solo admin può modificare le impostazioni
+  const guard = await requireRole(request, ['admin']);
+  if (guard.error) return guard.error;
+
   try {
     const body = await request.json();
     // Convert camelCase to snake_case for Supabase

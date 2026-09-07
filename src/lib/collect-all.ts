@@ -21,7 +21,8 @@ export async function runAllAgents(options?: { force?: boolean }): Promise<Colle
   }
 
   const agents = await fetchAgents();
-  const active = agents.filter((a) => a.status === 'active');
+  // Escludi l'agente di sistema "Redazione" (eventi audit, non fa raccolta)
+  const active = agents.filter((a) => a.status === 'active' && a.category !== 'redazione');
 
   const results: CollectAllResult['results'] = [];
   for (const agent of active) {

@@ -254,7 +254,7 @@ export default function AgentManager() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-muted-foreground">
-          {agents.filter((a) => a.status === 'active').length} agenti attivi su {agents.length}
+          {agents.filter((a) => a.status === 'active' && a.category !== 'redazione').length} agenti attivi su {agents.filter((a) => a.category !== 'redazione').length}
         </p>
         <Button
           size="sm"
@@ -268,7 +268,9 @@ export default function AgentManager() {
         </Button>
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {agents.map((agent, index) => (
+        {agents
+          .filter((a) => a.category !== 'redazione')
+          .map((agent, index) => (
           <AgentCard key={agent.id} agent={agent} index={index} />
         ))}
       </div>

@@ -241,35 +241,199 @@ export async function approveArticle(articleId: string, action: string, note?: s
   return toArticle(updated);
 }
 
+// ============================================
+// Pubblicazione multi-canale REALE
+// blog = sito stesso (sempre reale) | telegram = Bot API reale | webhook = automazione reale
+// twitter/linkedin/instagram/facebook = via relay webhook configurato, altrimenti skip onesto
+// ============================================
+
+export interface PublishResult {
+  platform: string;
+  status: 'published' | 'failed' | 'skipped';
+  detail: string;
+  postUrl?: string;
+}
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://nexus-news-ai.pages.dev';
+
+function buildTelegramText(article: { id: string; title: string; summary: string; category: string }): string {
+  const esc = (s: string) =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const summary = esc(article.summary || '').slice(0, 600);
+  const category = esc(article.category || 'news').toLowerCase().replace(/\s+/g, '');
+  return `📰 <b>${esc(article.title)}</b>\n\n${summary}\n\n🔗 ${SITE_URL}/articolo/\u200b${article.id}\n#${category} #NexusNewsAI`;
+}
+
+async function publishToChannel(
+  platform: string,
+  article: { id: string; title: string; summary: string; category: string; content: string; sourceName: string },
+  channels: Map<string, { enabled: boolean; config: Record<string, string> }>
+): Promise<PublishResult> {
+  const articleUrl = `${SITE_URL}/articolo/${article.id}`;
+  const ch = channels.get(platform);
+
+  if (platform === 'blog') {
+    return { platform, status: 'published', detail: 'Pubblicato sul blog Nexus', postUrl: articleUrl };
+  }
+
+  if (!ch || !ch.enabled) {
+    return {
+      platform,
+      status: 'skipped',
+      detail: 'Canale non configurato: attivalo e inserisci le credenziali in Impostazioni → Canali.',
+    };
+  }
+
+  const timeout = (ms: number) => {
+    const c = new AbortController();
+    const t = setTimeout(() => c.abort(), ms);
+    return { signal: c.signal, clear: () => clearTimeout(t) };
+  };
+
+  try {
+    if (platform === 'telegram') {
+      const token = ch.config.bot_token?.trim();
+      const chatId = ch.config.chat_id?.trim();
+      if (!token || !chatId) {
+        return { platform, status: 'skipped', detail: 'Canale non configurato: mancano bot_token o chat_id.' };
+      }
+      const t = timeout(12_000);
+      const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: buildTelegramText(article),
+          parse_mode: 'HTML',
+          disable_web_page_preview: false,
+        }),
+        signal: t.signal,
+      });
+      t.clear();
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.ok) {
+        return { platform, status: 'published', detail: 'Inviato su Telegram', postUrl: data.result?.message_id ? `https://t.me/c/${chatId.replace('-100', '')}/${data.result.message_id}` : undefined };
+      }
+      return { platform, status: 'failed', detail: `Telegram: ${data?.description || `HTTP ${res.status}`}` };
+    }
+
+    // webhook globale o relay per-social
+    let url = '';
+    if (platform === 'webhook') {
+      url = ch.config.url?.trim() || '';
+    } else {
+      url = ch.config.relay_webhook?.trim() || '';
+      if (!url) {
+        // fallback: relay globale attivo
+        const globalWebhook = channels.get('webhook');
+        if (globalWebhook?.enabled && globalWebhook.config.url?.trim()) {
+          url = globalWebhook.config.url.trim();
+        } else {
+          return {
+            platform,
+            status: 'skipped',
+            detail: 'Canale non configurato: serve un relay webhook (Make/Zapier/n8n) oppure il webhook globale.',
+          };
+        }
+      }
+    }
+    if (!url || !/^https?:\/\//.test(url)) {
+      return { platform, status: 'skipped', detail: 'Canale non configurato: URL webhook mancante o non valido.' };
+    }
+
+    const t = timeout(12_000);
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(ch.config.secret ? { 'X-Nexus-Secret': ch.config.secret } : {}),
+      },
+      body: JSON.stringify({
+        type: 'article_published',
+        channel: platform,
+        article: {
+          id: article.id,
+          title: article.title,
+          summary: article.summary,
+          url: articleUrl,
+          category: article.category,
+          source: article.sourceName,
+          excerpt: article.content?.slice(0, 500) || '',
+        },
+        timestamp: new Date().toISOString(),
+      }),
+      signal: t.signal,
+    });
+    t.clear();
+    if (res.ok) {
+      return { platform, status: 'published', detail: `Inviato via webhook (HTTP ${res.status})` };
+    }
+    return { platform, status: 'failed', detail: `Webhook ha risposto HTTP ${res.status}` };
+  } catch (err) {
+    const isTimeout = err instanceof Error && err.name === 'AbortError';
+    return { platform, status: 'failed', detail: isTimeout ? 'Timeout di connessione (12s)' : `Errore di rete: ${err instanceof Error ? err.message : 'sconosciuto'}` };
+  }
+}
+
 export async function publishArticle(articleId: string, platforms: string[]) {
-  const validPlatforms = ['blog', 'twitter', 'facebook', 'linkedin', 'instagram'];
+  const { data: articleRow } = await supabase
+    .from('articles')
+    .select('*')
+    .eq('id', articleId)
+    .single();
+  if (!articleRow) throw new Error('Articolo non trovato');
+
+  const { data: channelRows } = await supabase.from('channel_configs').select('*');
+  const channels = new Map<string, { enabled: boolean; config: Record<string, string> }>();
+  for (const row of channelRows || []) {
+    channels.set(row.channel, { enabled: !!row.enabled, config: (row.config as Record<string, string>) || {} });
+  }
+
+  // Stato attuale per-platform (per evitare doppioni)
+  const { data: existingLogs } = await supabase
+    .from('publish_logs')
+    .select('platform, status')
+    .eq('article_id', articleId);
+  const lastStatus = new Map<string, string>();
+  for (const log of existingLogs || []) {
+    lastStatus.set((log as { platform: string }).platform, (log as { status: string }).status);
+  }
+
+  const validPlatforms = ['blog', 'telegram', 'webhook', 'twitter', 'linkedin', 'instagram', 'facebook'];
+  const results: PublishResult[] = [];
 
   for (const platform of platforms) {
     if (!validPlatforms.includes(platform)) continue;
-    const success = Math.random() > 0.15;
+    if (lastStatus.get(platform) === 'published') {
+      results.push({ platform, status: 'skipped', detail: 'Già pubblicato su questo canale in precedenza.' });
+      continue;
+    }
+    const result = await publishToChannel(platform, articleRow, channels);
+    results.push(result);
+
     await supabase.from('publish_logs').insert({
       article_id: articleId,
       platform,
-      status: success ? 'published' : 'failed',
-      post_id: `post_${Date.now()}_${platform}`,
-      post_url: success ? `https://${platform}.com/post/${Date.now()}` : '',
-      error: success ? '' : 'Timeout di connessione - ritentare',
-      published_at: success ? new Date().toISOString() : null,
+      status: result.status === 'published' ? 'published' : result.status === 'skipped' ? 'skipped' : 'failed',
+      post_id: result.status === 'published' ? `post_${Date.now()}_${platform}` : '',
+      post_url: result.postUrl || '',
+      error: result.status === 'published' ? '' : result.detail,
+      published_at: result.status === 'published' ? new Date().toISOString() : null,
     });
   }
 
-  const { data: logs } = await supabase
-    .from('publish_logs')
-    .select('status')
-    .eq('article_id', articleId);
-
-  const anyPublished = logs?.some((l: { status: string }) => l.status === 'published');
-
-  if (anyPublished) {
+  const anyPublished = results.some((r) => r.status === 'published');
+  if (anyPublished && articleRow.status !== 'published') {
     await supabase
       .from('articles')
       .update({ status: 'published', published_at: new Date().toISOString() })
       .eq('id', articleId);
+    await supabase.from('activity_logs').insert({
+      agent_id: 'sys-redazione',
+      action: 'publishing',
+      detail: `Articolo "${articleRow.title}" pubblicato su: ${results.filter((r) => r.status === 'published').map((r) => r.platform).join(', ')}`,
+      status: 'success',
+    });
   }
 
   const { data: updated } = await supabase
@@ -279,7 +443,7 @@ export async function publishArticle(articleId: string, platforms: string[]) {
     .single();
 
   if (!updated) throw new Error('Article not found after publish');
-  return toArticle(updated);
+  return { article: toArticle(updated), results };
 }
 
 export async function collectNews(agentId: string) {
