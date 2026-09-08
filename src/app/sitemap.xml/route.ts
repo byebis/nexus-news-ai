@@ -1,13 +1,15 @@
-import { fetchArticles } from '@/lib/api';
+import { fetchArticles, fetchAgents } from '@/lib/api';
 import { CATEGORY_DEFS } from '@/lib/categories';
+import { slugForAgent } from '@/lib/agent-slug';
 
 const SITE_URL = 'https://nexus-news-ai.pages.dev';
 
 export async function GET() {
   try {
     const articles = await fetchArticles({ status: 'published', limit: 200 });
+    const agents = await fetchAgents();
 
-    const staticPages = ['', '/feed.xml'];
+    const staticPages = ['', '/feed.xml', '/wire'];
     const urls = [
       ...staticPages.map(
         (p) => `  <url><loc>${SITE_URL}${p}</loc><changefreq>hourly</changefreq><priority>${p === '' ? '1.0' : '0.3'}</priority></url>`
@@ -15,6 +17,10 @@ export async function GET() {
       // Pagine sezione (/categoria/[slug]) — daily, priority 0.6
       ...CATEGORY_DEFS.map(
         (c) => `  <url><loc>${SITE_URL}/categoria/${c.slug}</loc><changefreq>daily</changefreq><priority>0.6</priority></url>`
+      ),
+      // Pagine autore (/autore/[slug]) — daily, priority 0.5
+      ...agents.map(
+        (a) => `  <url><loc>${SITE_URL}/autore/${slugForAgent(a.name)}</loc><changefreq>daily</changefreq><priority>0.5</priority></url>`
       ),
       ...articles.map((a) => {
         const lastmod = (a.updatedAt || a.publishedAt || a.createdAt).slice(0, 10);

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Network, ShieldCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useT } from '@/lib/i18n';
+import { authorHref } from '@/lib/agent-slug';
 
 interface RunStep {
   agentName: string;
@@ -77,9 +78,11 @@ export default function WireProvenance({ articleId }: { articleId: string }) {
           </Badge>
         )}
         {uniqueAgents.slice(0, 6).map((a) => (
-          <Badge key={a.name + a.role} variant="secondary" className="text-[10px]">
-            {a.name}
-          </Badge>
+          <Link key={a.name + a.role} href={authorHref(a.name)}>
+            <Badge variant="secondary" className="text-[10px] transition-colors hover:bg-violet-100 dark:hover:bg-violet-900/40">
+              {a.name}
+            </Badge>
+          </Link>
         ))}
       </div>
       <Link

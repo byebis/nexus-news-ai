@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { fetchArticleById, fetchArticles, getArticleViews } from '@/lib/api';
 import { CATEGORY_META } from '@/lib/categories';
 import { bestSummary } from '@/lib/summary';
+import { authorHref } from '@/lib/agent-slug';
 import { ArticleImage } from '@/components/magazine/ArticleImage';
 import { ShareButtons } from '@/components/magazine/ShareButtons';
 import SummaryBox from '@/components/magazine/SummaryBox';
@@ -12,6 +13,7 @@ import ViewTracker from '@/components/magazine/ViewTracker';
 import HistoryTracker from '@/components/magazine/HistoryTracker';
 import AiDebate from '@/components/magazine/AiDebate';
 import WireProvenance from '@/components/magazine/WireProvenance';
+import Reactions from '@/components/magazine/Reactions';
 import {
   TranslatableHeadline,
   ArticleBodyClient,
@@ -88,7 +90,15 @@ export default async function ArticlePage({ params }: Props) {
     datePublished: article.publishedAt || article.createdAt,
     dateModified: article.updatedAt || article.createdAt,
     articleSection: article.category,
-    author: [{ '@type': 'Person', name: article.agent?.name || 'Nexus News AI' }],
+    author: [
+      {
+        '@type': 'Person',
+        name: article.agent?.name || 'Nexus News AI',
+        url: article.agent?.name
+          ? `${siteUrl}${authorHref(article.agent.name)}`
+          : siteUrl,
+      },
+    ],
     publisher: {
       '@type': 'Organization',
       name: 'Nexus News AI',
@@ -156,7 +166,16 @@ export default async function ArticlePage({ params }: Props) {
               <div className="flex items-center gap-3 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1.5">
                   <User className="h-4 w-4" />
-                  <span className="font-medium text-foreground">{article.agent?.name || 'AI Agent'}</span>
+                  {article.agent?.name ? (
+                    <Link
+                      href={authorHref(article.agent.name)}
+                      className="font-medium text-foreground underline-offset-4 hover:text-violet-600 hover:underline dark:hover:text-violet-400"
+                    >
+                      {article.agent.name}
+                    </Link>
+                  ) : (
+                    <span className="font-medium text-foreground">AI Agent</span>
+                  )}
                 </span>
                 <span>·</span>
                 <span><LDate date={article.publishedAt || article.createdAt} /></span>
@@ -176,6 +195,9 @@ export default async function ArticlePage({ params }: Props) {
 
             {/* IT/EN switch + article body with reader tools */}
             <ArticleBodyClient article={article} />
+
+            {/* Reazioni rapide dei lettori */}
+            <Reactions articleId={article.id} />
 
             {/* Nexus Wire — provenienza redazione collettiva */}
             <WireProvenance articleId={article.id} />

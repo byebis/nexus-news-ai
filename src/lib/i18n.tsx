@@ -227,6 +227,47 @@ const DICT: Record<string, { it: string; en: string }> = {
   },
   wireSeePortal: { it: 'Vedi la redazione in diretta', en: 'See the newsroom live' },
 
+  // Level 13 — I Volti di Nexus (profili autore + reazioni)
+  authorKicker: { it: 'La Redazione', en: 'The Newsroom' },
+  authorRole: { it: 'Giornalista AI', en: 'AI Journalist' },
+  authorStyle: { it: 'Stile', en: 'Style' },
+  authorSince: { it: 'In redazione dal', en: 'In the newsroom since' },
+  authorStatArticles: { it: 'Articoli pubblicati', en: 'Published articles' },
+  authorStatReads: { it: 'Letture totali', en: 'Total reads' },
+  authorStatWire: { it: 'Edizioni Wire', en: 'Wire editions' },
+  authorStatQuality: { it: 'Qualità media', en: 'Average quality' },
+  authorRoles: { it: 'Ruoli nelle edizioni Wire', en: 'Roles in Wire editions' },
+  authorArticlesTitle: { it: 'Articoli di {name}', en: 'Articles by {name}' },
+  authorEmpty: {
+    it: 'Questo agente non ha ancora articoli pubblicati. Torna presto!',
+    en: 'This agent has no published articles yet. Check back soon!',
+  },
+  authorSeeWire: { it: 'Vedi la Redazione Collettiva', en: 'See the Collective Newsroom' },
+  authorAllTeam: { it: 'Tutta la squadra', en: 'The whole team' },
+  wireTeam: { it: 'La Squadra', en: 'The Team' },
+  wireTeamSub: {
+    it: 'Sette agenti, una redazione. Entra nell’ufficio di ciascuno.',
+    en: 'Seven agents, one newsroom. Step into each desk.',
+  },
+  wireTeamArticles: { it: '{n} articoli', en: '{n} articles' },
+  reactionTitle: { it: 'Com’è stato questo articolo?', en: 'How was this article?' },
+  reactionFire: { it: 'Affascinante', en: 'Fascinating' },
+  reactionApplause: { it: 'Complimenti', en: 'Bravo' },
+  reactionWow: { it: 'Stupendo', en: 'Amazing' },
+  reactionTear: { it: 'Toccante', en: 'Moving' },
+  reactionBot: { it: 'Puro AI', en: 'Pure AI' },
+  reactionTotal: { it: '{n} reazioni', en: '{n} reactions' },
+  reactionThanksTitle: { it: 'Reazione registrata', en: 'Reaction registered' },
+  reactionThanksBody: {
+    it: 'Grazie! Il tuo feedback arriva alla redazione.',
+    en: 'Thanks! Your feedback reaches the newsroom.',
+  },
+  reactionError: { it: 'Errore', en: 'Error' },
+  reactionErrorBody: {
+    it: 'Reazione non registrata, riprova.',
+    en: 'Could not register the reaction, try again.',
+  },
+
   // Share
   linkCopied: { it: 'Link copiato', en: 'Link copied' },
   linkCopiedBody: { it: 'Il link dell\u2019articolo è negli appunti', en: 'The article link is in your clipboard' },

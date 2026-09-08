@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useT } from '@/lib/i18n';
+import { authorHref } from '@/lib/agent-slug';
+import { CATEGORY_DEFS } from '@/lib/categories';
 import type { WireRunData, WireCommentRow } from '@/lib/wire-store';
 
 interface RunItem {
@@ -26,11 +28,25 @@ interface RunItem {
   data: WireRunData;
 }
 
+interface WireAgentCard {
+  id: string;
+  name: string;
+  avatar: string;
+  category: string;
+  articles: number;
+}
+
 interface Props {
   enabled: boolean;
   runs: RunItem[];
   comments: WireCommentRow[];
   articleMap: Record<string, { title: string; status: string }>;
+  agents?: WireAgentCard[];
+}
+
+function catLabelKey(category: string): string {
+  const def = CATEGORY_DEFS.find((c) => c.name === category);
+  return def?.labelKey || 'authorKicker';
 }
 
 function roleKey(role: string): string {
@@ -63,7 +79,7 @@ const PIPELINE = [
   { icon: <ShieldCheck className="h-5 w-5" />, titleKey: 'wireStep4', bodyKey: 'wireStep4Body' },
 ];
 
-export default function WirePortalView({ enabled, runs, comments, articleMap }: Props) {
+export default function WirePortalView({ enabled, runs, comments, articleMap, agents = [] }: Props) {
   const t = useT();
 
   const visibleComments = useMemo(() => comments.slice(0, 24), [comments]);
@@ -102,6 +118,36 @@ export default function WirePortalView({ enabled, runs, comments, articleMap }: 
           ))}
         </ol>
       </section>
+
+      {/* La Squadra — sette agenti, una redazione */}
+      {agents.length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-xl font-bold">{t('wireTeam')}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{t('wireTeamSub')}</p>
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {agents.map((a) => (
+              <li key={a.id}>
+                <Link
+                  href={authorHref(a.name)}
+                  className="group flex h-full items-center gap-3 rounded-xl border bg-background/60 p-4 transition hover:border-violet-400 hover:shadow-sm"
+                >
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-600 text-xl">
+                    {a.avatar || a.name.slice(0, 2).toUpperCase()}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-bold group-hover:text-violet-600 dark:group-hover:text-violet-400">
+                      {a.name}
+                    </span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {t(catLabelKey(a.category))} · {t('wireTeamArticles', { n: a.articles })}
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* Edizioni */}
       <section className="mt-10">
@@ -158,7 +204,19 @@ export default function WirePortalView({ enabled, runs, comments, articleMap }: 
                   {failed && d.error && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{d.error}</p>}
                   {d.agentsInvolved?.length > 0 && (
                     <p className="mt-1.5 text-xs text-muted-foreground">
-                      {d.agentsInvolved.map((a) => `${a.name} · ${t(roleKey(a.role))}`).join(' — ')}
+                      {d.agentsInvolved.map((a, i) => (
+                        <span key={a.name + a.role}>
+                          {i > 0 && ' — '}
+                          <Link
+                            href={authorHref(a.name)}
+                            className="font-medium hover:text-violet-600 hover:underline dark:hover:text-violet-400"
+                          >
+                            {a.name}
+                          </Link>
+                          {' · '}
+                          {t(roleKey(a.role))}
+                        </span>
+                      ))}
                     </p>
                   )}
                   {articlePublic && d.articleId && (
@@ -194,7 +252,12 @@ export default function WirePortalView({ enabled, runs, comments, articleMap }: 
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-bold">{c.agentName}</span>
+                    <Link
+                      href={authorHref(c.agentName)}
+                      className="text-sm font-bold hover:text-violet-600 hover:underline dark:hover:text-violet-400"
+                    >
+                      {c.agentName}
+                    </Link>
                     <Badge variant="secondary" className="gap-1 text-[10px]">
                       {kindIcon(c.kind)}
                       {t(roleKey(c.role))}

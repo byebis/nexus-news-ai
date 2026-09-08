@@ -3,6 +3,7 @@ import Header from '@/components/shared/Header';
 import Footer from '@/components/shared/Footer';
 import WirePortalView from '@/components/magazine/WirePortalView';
 import { getWireEnabled, fetchWireRuns, fetchWireComments, type WireRunData } from '@/lib/wire-store';
+import { fetchAgents } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -20,12 +21,24 @@ export default async function WirePage() {
 
   let runs: { id: string; status: string; createdAt: string; data: WireRunData }[] = [];
   let comments: Awaited<ReturnType<typeof fetchWireComments>> = [];
+  let team: { id: string; name: string; avatar: string; category: string; articles: number }[] = [];
   const articleMap: Record<string, { title: string; status: string }> = {};
 
   if (enabled) {
-    const [runRows, commentRows] = await Promise.all([fetchWireRuns(30), fetchWireComments(50)]);
+    const [runRows, commentRows, agents] = await Promise.all([
+      fetchWireRuns(30),
+      fetchWireComments(50),
+      fetchAgents(),
+    ]);
     runs = runRows.map((r) => ({ id: r.id, status: r.status, createdAt: r.createdAt, data: r.data }));
     comments = commentRows;
+    team = agents.map((a) => ({
+      id: a.id,
+      name: a.name,
+      avatar: a.avatar,
+      category: a.category,
+      articles: a._count?.articles ?? 0,
+    }));
 
     // Stato pubblico degli articoli collegati alle edizioni
     const articleIds = [...new Set(runs.map((r) => r.data?.articleId).filter(Boolean))] as string[];
@@ -44,7 +57,7 @@ export default async function WirePage() {
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Header />
       <main className="flex-1">
-        <WirePortalView enabled={enabled} runs={runs} comments={comments} articleMap={articleMap} />
+        <WirePortalView enabled={enabled} runs={runs} comments={comments} articleMap={articleMap} agents={team} />
       </main>
       <Footer />
     </div>

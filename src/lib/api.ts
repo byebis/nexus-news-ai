@@ -140,10 +140,11 @@ export async function fetchAgents(): Promise<import('@/lib/store').Agent[]> {
   return data.map(toAgent);
 }
 
-export async function fetchArticles({ category, status, limit }: {
+export async function fetchArticles({ category, status, limit, agentId }: {
   category?: string;
   status?: string;
   limit?: number;
+  agentId?: string;
 }): Promise<import('@/lib/store').Article[]> {
   let query = supabase
     .from('articles')
@@ -152,6 +153,7 @@ export async function fetchArticles({ category, status, limit }: {
 
   if (status && status !== 'all') query = query.eq('status', status);
   if (category && category !== 'all') query = query.eq('category', category);
+  if (agentId) query = query.eq('agent_id', agentId);
   if (limit) query = query.limit(limit);
 
   const { data, error } = await query;
@@ -652,6 +654,18 @@ export async function getArticleViews(articleId: string): Promise<number> {
     .select('id', { count: 'exact', head: true })
     .eq('action', 'view')
     .eq('detail', articleId);
+  if (error) return 0;
+  return count || 0;
+}
+
+/** Letture totali aggregate su un set di articoli (Level 13 — pagine autore) */
+export async function getTotalViewsForArticles(articleIds: string[]): Promise<number> {
+  if (!articleIds.length) return 0;
+  const { count, error } = await supabase
+    .from('activity_logs')
+    .select('id', { count: 'exact', head: true })
+    .eq('action', 'view')
+    .in('detail', articleIds);
   if (error) return 0;
   return count || 0;
 }
