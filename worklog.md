@@ -469,3 +469,31 @@ Stage Summary:
 - Gli agenti SI COMMENTANO E SI REVISIONANO in pubblico (bacheca stile Moltbook) e producono articoli multi-fonte (≥3) che passano sempre dall'approvazione admin
 - Toggle admin ON/OFF: quando OFF il portale mostra "Portale in pausa" e l'API rifiuta i run
 - Nota futura: se si vogliono tabelle dedicate (wire_runs/agent_comments), serve DDL — script pronto in scripts/migrate-levelup12.py ma pooler Supabase morto; la convenzione activity_logs è equivalente e già migrabile
+
+---
+Task ID: levelup-13
+Agent: Super Z (main)
+Task: Level 13 — Anton "Ok level up" (dopo report L12): I Volti di Nexus — pagine autore pubbliche per i 7 agenti + reazioni lettori
+
+Work Log:
+- Recon: agents table (name/avatar/category UNIQUE/description/personality), views gia' su activity_logs (action='view', detail=articleId, head count) → reactions con lo stesso pattern zero-cost; activity_logs.detail è TEXT → .like() utilizzabile; byline articolo server-side in pagina
+- NEW src/lib/agent-slug.ts: slugForAgent (NFD strip accenti), authorHref(), AGENT_REACTIONS ['🔥','👏','🤯','😢','🤖'] + isAgentReaction
+- NEW src/app/api/reactions/route.ts: GET ?articleId (counts via .like('<id>|%') aggregate in memoria) + POST (validazione reaction, anchor agent_id = autore articolo per vincolo NOT NULL, insert + counts freschi); 404 articolo mancante
+- NEW src/components/magazine/Reactions.tsx: barra 5 reazioni a fine articolo, optimistic update con rollback, dedup per browser via localStorage nexus_reactions_v1, bottone disabled dopo reazione, toast conferma, totale reazioni, i18n
+- NEW src/app/autore/[slug]/page.tsx (force-dynamic): hero gradiente con avatar emoji, badge Giornalista AI + categoria, description+personality, "In redazione dal"; stats 4 card (articoli pubblicati, letture totali via getTotalViewsForArticles, edizioni Wire completate con partecipazione, qualità media pubblicazioni); chip ruoli Wire con conteggi; griglia articoli agente (fetchArticles + nuovo filtro agentId); link Redazione Collettiva + Tutta la squadra; generateMetadata; JSON-LD Person (jobTitle Giornalista AI, worksFor, knowsAbout)
+- api.ts: fetchArticles + param agentId; + getTotalViewsForArticles (head count .in detail)
+- articolo/[id]/page.tsx: byline agente ora Link a /autore/[slug] (hover violet); + <Reactions> dopo ArticleBodyClient; JSON-LD author.url → pagina autore
+- WireProvenance: badge agenti → Link /autore; WirePortalView: nome in bacheca linkato + agenti nelle edizioni linkati + nuova sezione "La Squadra" (card 8 agenti con avatar/categoria/n. articoli); /wire/page.tsx passa agents da fetchAgents
+- i18n: +28 chiavi IT/EN (author* x13, wireTeam* x3, reaction* x12)
+- sitemap.xml: +8 URL /autore + /wire; title autore senza duplicazione suffisso (fix in 2a deploy)
+- FIX lint: set-state-in-effect in Reactions → setTimeout(0) per read localStorage (pattern L11)
+- .cf-credentials cancellata di nuovo dall'ambiente → ricreata (token+account id)
+- Deploy: 1f63d085 poi 0c011c8c (fix title)
+- E2E PRODUZIONE: API reactions GET/POST/persist/404 OK; articolo: 5 bottoni renderizzati, click 👏 → 0→1, disabled, "2 reazioni", localStorage ok, toast ok; click byline → /autore/techbot (200, title ok, Person JSON-LD, stats 7 art / 27 letture / 1 edizione / 84%, 7 link articoli); /wire: La Squadra con 8 agenti (incluso "Redazione"), badge provenienza e nomi bacheca linkati; mobile 390px overflow 0
+- Screenshot: l13-autore-techbot.png, l13-wire-squadra.png, l13-mobile-autore.png
+- Commit 9014714 pushato
+
+Stage Summary:
+- L13 LIVE: i 7 agenti sono giornalisti con volto pubblico — profilo /autore/[slug] raggiungibile da byline articolo, portale Wire (La Squadra + edizioni + bacheca) e provenienza; ogni articolo ha reazioni live dei lettori (zero cost, stesso pattern views)
+- SEO: JSON-LD Person + URL autore in NewsArticle + 8 URL in sitemap
+- Nessuna DDL necessaria: reactions su activity_logs (convenzione come wire)
